@@ -15,15 +15,17 @@
  */
 package com.homeaway.streamplatform.streamregistry.resource;
 
+import java.util.*;
+
+import javax.ws.rs.core.Response;
+
+import org.junit.Test;
+
 import com.homeaway.digitalplatform.streamregistry.ClusterKey;
 import com.homeaway.digitalplatform.streamregistry.ClusterValue;
 import com.homeaway.streamplatform.streamregistry.db.dao.ClusterDao;
 import com.homeaway.streamplatform.streamregistry.db.dao.impl.ClusterDaoImpl;
 import com.homeaway.streamplatform.streamregistry.model.Cluster;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
-import java.util.*;
 
 public class StreamSourceResourceIT extends BaseResourceIT {
     @SuppressWarnings("unchecked")
