@@ -18,7 +18,6 @@ package com.homeaway.streamplatform.streamregistry.resource;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -27,16 +26,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.homeaway.streamplatform.streamregistry.model.Stream;
-import com.homeaway.streamplatform.streamregistry.utils.ResourceUtils;
-import io.dropwizard.jersey.errors.ErrorMessage;
-import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 
 import com.codahale.metrics.annotation.Timed;
 
+import io.swagger.annotations.*;
+
 import com.homeaway.streamplatform.streamregistry.db.dao.ClusterDao;
 import com.homeaway.streamplatform.streamregistry.model.Cluster;
+import com.homeaway.streamplatform.streamregistry.model.Stream;
 
 @Api(value = "Stream-registry API", description = "Stream Registry API, a centralized governance tool for managing streams.")
 @Path("/v0/clusters")

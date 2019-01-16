@@ -17,10 +17,10 @@ package com.homeaway.streamplatform.streamregistry.model;
 
 import java.util.Map;
 
+import javax.validation.constraints.NotNull;
+
 import lombok.Builder;
 import lombok.Data;
-
-import javax.validation.constraints.NotNull;
 
 @Builder
 @Data
