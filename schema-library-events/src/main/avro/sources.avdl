@@ -1,0 +1,22 @@
+@namespace("com.homeaway.digitalplatform.streamregistry")
+
+protocol SourceProtocol {
+
+/**
+* Source schema
+*/
+  record Source {
+  /**
+   * Type of source
+   */
+    string sourceType;
+
+  /**
+  * Name of source
+  */
+    string sourceName;
+
+    union{null,map<string>} streamSourceConfiguration = null;
+  }
+
+}

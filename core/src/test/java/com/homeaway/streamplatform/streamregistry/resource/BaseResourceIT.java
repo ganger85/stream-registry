@@ -185,8 +185,11 @@ public class BaseResourceIT {
         loadConfig("config-dev.yaml");
         TopicsConfig topicsConfig = configuration.getTopicsConfig();
         String producerTopic = topicsConfig.getProducerTopic();
+        String streamSourceTopic = topicsConfig.getStreamSourceTopic();
+
         try {
             createTopic(producerTopic, 1, 1, new Properties());
+            createTopic(streamSourceTopic, 1, 1, new Properties());
         } catch (Exception exception) {
             throw new IllegalStateException("Could not create topic " + producerTopic, exception);
         }

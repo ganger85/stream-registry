@@ -13,29 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.homeaway.streamplatform.streamregistry.configuration;
+package com.homeaway.streamplatform.streamregistry.db.dao;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import com.homeaway.streamplatform.streamregistry.model.Cluster;
 
-import lombok.Data;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
-@Data
-public class TopicsConfig {
+public interface ClusterDao {
 
-    @Valid
-    @NotNull
-    String producerTopic;
+    Map<String, List<Cluster>> getClusters();
 
-    @Valid
-    @NotNull
-    String stateStoreName;
+    Collection<Cluster> getCluster(String clusterName);
 
-    @Valid
-    @NotNull
-    String streamSourceTopic;
-
-    @Valid
-    @NotNull
-    String streamSourceStateStoreName;
 }
