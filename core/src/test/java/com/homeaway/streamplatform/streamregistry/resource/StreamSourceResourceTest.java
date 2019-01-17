@@ -15,44 +15,25 @@
  */
 package com.homeaway.streamplatform.streamregistry.resource;
 
-import java.util.*;
-
-import javax.ws.rs.core.Response;
-
-import org.junit.Test;
-
+import com.google.common.collect.Multimap;
 import com.homeaway.digitalplatform.streamregistry.ClusterKey;
 import com.homeaway.digitalplatform.streamregistry.ClusterValue;
 import com.homeaway.streamplatform.streamregistry.db.dao.ClusterDao;
 import com.homeaway.streamplatform.streamregistry.db.dao.impl.ClusterDaoImpl;
 import com.homeaway.streamplatform.streamregistry.model.Cluster;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class StreamSourceResourceIT extends BaseResourceIT {
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testGetClusters(){
+import javax.ws.rs.core.Response;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-        ClusterDao clusterDao = new ClusterDaoImpl(infraManager);
-        ClusterResource resource = new ClusterResource(clusterDao);
-        Response response = resource.getClusters();
-        Collection<Cluster> clusters = (Collection<Cluster>) response.getEntity();
+public class StreamSourceResourceTest {
 
-        System.out.println(clusters);
-//
-//        Assert.assertEquals(new HashSet<>(Arrays.asList(US_EAST_REGION)),
-//                hints.stream().filter((hint) -> hint.getHint().equalsIgnoreCase(AbstractDao.PRIMARY_HINT)).findFirst().get().getVpcs());
-//        Assert.assertEquals(new HashSet<>(Arrays.asList(US_EAST_REGION)),
-//                hints.stream().filter((hint) -> hint.getHint().equalsIgnoreCase(BaseResourceIT.OTHER_HINT)).findFirst().get().getVpcs());
-//        Assert.assertEquals(new HashSet<>(Arrays.asList(US_WEST_REGION)),
-//                hints.stream().filter((hint) -> hint.getHint().equalsIgnoreCase(BaseResourceIT.SOME_HINT)).findFirst().get().getVpcs());
+    private static InfraManagerImplStub infraManager;
 
-    }
-
-
-
-
-    private static Map<ClusterKey, ClusterValue> dummyInfraMap() {
-
+    static {
 
         Map<ClusterKey, ClusterValue> infraManagerMap = new HashMap();
 
@@ -80,7 +61,25 @@ public class StreamSourceResourceIT extends BaseResourceIT {
                 ClusterValue.newBuilder()
                         .setClusterProperties(new HashMap<>()).build());
 
-        return Collections.unmodifiableMap(infraManagerMap);
+
+        infraManager = new InfraManagerImplStub();
+
+        Collections.unmodifiableMap(infraManagerMap)
+                .forEach((k,v) -> infraManager.addCluster(k,v));
+
+    }
+
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testGetClusters(){
+
+        ClusterDao clusterDao = new ClusterDaoImpl("dev", infraManager);
+        ClusterResource resource = new ClusterResource(clusterDao);
+        Response response = resource.getClusters();
+        Multimap<String, Cluster> clusters = (Multimap<String, Cluster>) response.getEntity();
+
+        Assert.assertEquals(infraManager.getAllClusters().size(), clusters.size());
     }
 
 }

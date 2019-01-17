@@ -38,27 +38,25 @@ public class ManagedKStreams implements Managed {
 
     @Getter
     private final KafkaStreams streams;
+
     @Getter
     private final Properties streamProperties;
+
     @Getter
-    private final TopicsConfig topicsConfig;
     private final String stateStoreName;
 
     private ReadOnlyKeyValueStore<AvroStreamKey, AvroStream> view;
     private boolean isRunning = false;
 
-    public ManagedKStreams(Properties streamProperties, TopicsConfig topicsConfig) {
-        this(streamProperties, topicsConfig, null);
-    }
+    public ManagedKStreams(Properties streamProperties, String topicName, String stateStoreName,
+                           KStreamsProcessorListener testListener) {
 
-    public ManagedKStreams(Properties streamProperties, TopicsConfig topicsConfig, KStreamsProcessorListener testListener) {
         this.streamProperties = streamProperties;
-        this.topicsConfig = topicsConfig;
+        this.stateStoreName = stateStoreName;
 
-        stateStoreName = topicsConfig.getStateStoreName();
         KStreamBuilder kStreamBuilder= new KStreamBuilder();
 
-        kStreamBuilder.globalTable(topicsConfig.getProducerTopic(), stateStoreName);
+        kStreamBuilder.globalTable(topicName, stateStoreName);
 
         streams = new KafkaStreams(kStreamBuilder, streamProperties);
         // [ #132 ] - Improve build times by notifying test listener that we are running

@@ -32,21 +32,26 @@ import com.homeaway.streamplatform.streamregistry.provider.InfraManager;
 public class ClusterDaoImpl implements ClusterDao {
 
     @NotNull
+    private String env;
+
+    @NotNull
     private final InfraManager infraManager;
 
-    public ClusterDaoImpl(InfraManager infraManager) {
+    public ClusterDaoImpl(String env,
+                          InfraManager infraManager) {
+        this.env = env;
         this.infraManager = infraManager;
     }
 
     private static Multimap<String, Cluster> clustersByName =  ArrayListMultimap.create();
 
     @Override
-    public Map<String, List<Cluster>> getClusters() {
+    public Multimap<String, Cluster> getClusters() {
 
         Map<ClusterKey, ClusterValue>  clusterByName = infraManager.getAllClusters()
                 .entrySet()
                 .stream()
-                .filter((e -> e.getKey().getEnv().equalsIgnoreCase("dev")))
+                .filter((e -> e.getKey().getEnv().equalsIgnoreCase(env)))
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
 
         Iterator it = clusterByName.entrySet().iterator();
@@ -56,13 +61,13 @@ public class ClusterDaoImpl implements ClusterDao {
             it.remove(); // avoids a ConcurrentModificationException
         }
 
-        return null;
+        return clustersByName;
 
     }
 
     @Override
     public Collection<Cluster> getCluster(String clusterName) {
-        return clustersByName.get(clusterName);
+        return null;
     }
 
 
