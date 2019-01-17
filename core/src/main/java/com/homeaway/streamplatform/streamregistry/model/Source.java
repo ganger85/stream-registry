@@ -15,15 +15,32 @@
  */
 package com.homeaway.streamplatform.streamregistry.model;
 
+import java.util.Map;
 
-import java.util.Arrays;
-import java.util.List;
+import javax.validation.constraints.NotNull;
 
-/**
- * Source types supported by the Stream Registry
- */
-public class SourceType {
+import lombok.Builder;
+import lombok.Data;
 
-    public static final List<String> sourceTypes = Arrays.asList("kinesis");
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
+@JsonDeserialize(builder = Source.SourceBuilder.class)
+@Builder
+@Data
+public class Source {
+    @NotNull
+    private String streamName;
+
+    @NotNull
+    private String sourceName;
+
+    @NotNull
+    private String sourceType;
+
+    @NotNull
+    private Map<String, String> streamSourceConfiguration;
+
+    @JsonPOJOBuilder(withPrefix = "")
+    public static final class SourceBuilder {}
 }

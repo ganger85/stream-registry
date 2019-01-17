@@ -27,9 +27,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
-import com.homeaway.digitalplatform.streamregistry.AvroStream;
 import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
-import com.homeaway.streamplatform.streamregistry.configuration.TopicsConfig;
 
 @Slf4j
 public class ManagedKafkaProducer<T> implements Managed {

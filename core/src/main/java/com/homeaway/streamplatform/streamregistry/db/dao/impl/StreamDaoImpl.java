@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.streams.state.KeyValueIterator;
 
 import com.homeaway.digitalplatform.streamregistry.AvroStream;
 import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
@@ -283,7 +284,8 @@ public class StreamDaoImpl extends AbstractDao implements StreamDao, StreamValid
     public List<Stream> getAllStreams() {
         List<Stream> streamList = new ArrayList<>();
         log.info("Pulling stream information from local instance's state-store");
-        kStreams.getAllStreams().forEachRemaining(avroStream -> streamList.add(AvroToJsonDTO.convertAvroToJson(avroStream.value)));
+        KeyValueIterator<AvroStreamKey, AvroStream> allStreams = (KeyValueIterator<AvroStreamKey, AvroStream>)kStreams.getAllStreams();
+        allStreams.forEachRemaining(avroStream -> streamList.add(AvroToJsonDTO.convertAvroToJson(avroStream.value)));
         return streamList;
     }
 

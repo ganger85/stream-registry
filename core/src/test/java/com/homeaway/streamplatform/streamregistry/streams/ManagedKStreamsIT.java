@@ -51,7 +51,8 @@ public class ManagedKStreamsIT extends BaseResourceIT {
         Thread.sleep(TEST_SLEEP_WAIT_MS);
 
         // Validate whether the stream is in KV-Store
-        AvroStream avroStream = managedKStreams.getAvroStreamForKey(AvroStreamKey.newBuilder().setStreamName(streamName).build()).get();
+        Optional<AvroStream> avroStreamForKey = managedKStreams.getAvroStreamForKey(AvroStreamKey.newBuilder().setStreamName(streamName).build());
+        AvroStream avroStream = avroStreamForKey.get();
         Assert.assertEquals(streamName, avroStream.getName());
         Assert.assertEquals(avroMessage.getValue(), avroStream);
     }
@@ -75,7 +76,8 @@ public class ManagedKStreamsIT extends BaseResourceIT {
         Thread.sleep(TEST_SLEEP_WAIT_MS);
 
         // Validate whether the stream is in KV-Store
-        AvroStream avroStream = managedKStreams.getAvroStreamForKey(AvroStreamKey.newBuilder().setStreamName(streamName).build()).get();
+        Optional<AvroStream> avroStreamForKey = managedKStreams.getAvroStreamForKey(AvroStreamKey.newBuilder().setStreamName(streamName).build());
+        AvroStream avroStream = avroStreamForKey.get();
         Assert.assertEquals(streamName, avroStream.getName());
         Assert.assertEquals(avroMessage.getValue(), avroStream);
 
@@ -109,7 +111,8 @@ public class ManagedKStreamsIT extends BaseResourceIT {
         // Verify whether the stream is available in KV-Store
         Thread.sleep(TEST_SLEEP_WAIT_MS);
         // Validate whether the stream is null in KV-Store
-        AvroStream avroStream = managedKStreams.getAvroStreamForKey(AvroStreamKey.newBuilder().setStreamName(streamName).build()).get();
+        Optional<AvroStream> avroStreamForKey = managedKStreams.getAvroStreamForKey(AvroStreamKey.newBuilder().setStreamName(streamName).build());
+        AvroStream avroStream = avroStreamForKey.get();
         Assert.assertEquals(streamName, avroStream.getName());
         Assert.assertEquals("Existing Owner value is: user-1 ","user-1", avroStream.getOwner());
 
@@ -121,7 +124,8 @@ public class ManagedKStreamsIT extends BaseResourceIT {
 
         // Verify whether the stream owner is updated.
         Thread.sleep(TEST_SLEEP_WAIT_MS);
-        avroStream = managedKStreams.getAvroStreamForKey(AvroStreamKey.newBuilder().setStreamName(streamName).build()).get();
+        avroStreamForKey = managedKStreams.getAvroStreamForKey(AvroStreamKey.newBuilder().setStreamName(streamName).build());
+        avroStream = avroStreamForKey.get();
         Assert.assertEquals("Owner Value has been updated.","user-2", avroStream.getOwner());
         Assert.assertEquals("Message from the state store and input message are same.",avroMessage.getValue(), avroStream);
     }

@@ -29,12 +29,10 @@ import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 
-import com.homeaway.digitalplatform.streamregistry.AvroStream;
 import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
-import com.homeaway.streamplatform.streamregistry.configuration.TopicsConfig;
 
 @Slf4j
-public class ManagedKStreams implements Managed {
+public class ManagedKStreams<T> implements Managed {
 
     @Getter
     private final KafkaStreams streams;
@@ -45,7 +43,7 @@ public class ManagedKStreams implements Managed {
     @Getter
     private final String stateStoreName;
 
-    private ReadOnlyKeyValueStore<AvroStreamKey, AvroStream> view;
+    private ReadOnlyKeyValueStore<AvroStreamKey, T> view;
     private boolean isRunning = false;
 
     public ManagedKStreams(Properties streamProperties, String topicName, String stateStoreName,
@@ -85,11 +83,11 @@ public class ManagedKStreams implements Managed {
         log.info("KStreams closed");
     }
 
-    public Optional<AvroStream> getAvroStreamForKey(AvroStreamKey key){
+    public Optional<T> getAvroStreamForKey(AvroStreamKey key){
         return Optional.ofNullable(view.get(key));
     }
 
-    public KeyValueIterator<AvroStreamKey, AvroStream> getAllStreams(){
+    public KeyValueIterator<AvroStreamKey, T> getAllStreams(){
         return view.all();
     }
 }
