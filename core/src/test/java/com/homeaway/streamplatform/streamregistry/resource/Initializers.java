@@ -15,23 +15,16 @@
  */
 package com.homeaway.streamplatform.streamregistry.resource;
 
-import com.google.common.collect.Multimap;
-import com.homeaway.digitalplatform.streamregistry.ClusterKey;
-import com.homeaway.digitalplatform.streamregistry.ClusterValue;
-import com.homeaway.streamplatform.streamregistry.db.dao.ClusterDao;
-import com.homeaway.streamplatform.streamregistry.db.dao.impl.ClusterDaoImpl;
-import com.homeaway.streamplatform.streamregistry.model.Cluster;
-import org.junit.Assert;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StreamSourceResourceTest {
+import com.homeaway.digitalplatform.streamregistry.ClusterKey;
+import com.homeaway.digitalplatform.streamregistry.ClusterValue;
 
-    private static InfraManagerImplStub infraManager;
+public class Initializers {
+
+    protected static InfraManagerImplStub infraManagerImplStub;
 
     static {
 
@@ -62,24 +55,10 @@ public class StreamSourceResourceTest {
                         .setClusterProperties(new HashMap<>()).build());
 
 
-        infraManager = new InfraManagerImplStub();
+        infraManagerImplStub = new InfraManagerImplStub();
 
         Collections.unmodifiableMap(infraManagerMap)
-                .forEach((k,v) -> infraManager.addCluster(k,v));
+                .forEach((k,v) -> infraManagerImplStub.addCluster(k,v));
 
     }
-
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testGetClusters(){
-
-        ClusterDao clusterDao = new ClusterDaoImpl("dev", infraManager);
-        ClusterResource resource = new ClusterResource(clusterDao);
-        Response response = resource.getClusters();
-        Multimap<String, Cluster> clusters = (Multimap<String, Cluster>) response.getEntity();
-
-        Assert.assertEquals(infraManager.getAllClusters().size(), clusters.size());
-    }
-
 }

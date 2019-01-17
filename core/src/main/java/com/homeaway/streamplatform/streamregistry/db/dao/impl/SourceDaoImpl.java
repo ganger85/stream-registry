@@ -1,34 +1,38 @@
-/*
- *  Copyright (c) 2018 Expedia Group.
- *  * All rights reserved.  http://www.homeaway.com
- *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
+/* Copyright (c) 2018 Expedia Group.
+ * All rights reserved.  http://www.homeaway.com
 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+
+ *      http://www.apache.org/licenses/LICENSE-2.0
+
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.homeaway.streamplatform.streamregistry.db.dao.impl;
 
-import com.homeaway.digitalplatform.streamregistry.Source;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
+
+import lombok.extern.slf4j.Slf4j;
+
+import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
+import com.homeaway.digitalplatform.streamregistry.Sources;
 import com.homeaway.streamplatform.streamregistry.db.dao.SourceDao;
+import com.homeaway.streamplatform.streamregistry.model.Source;
 import com.homeaway.streamplatform.streamregistry.provider.InfraManager;
 import com.homeaway.streamplatform.streamregistry.streams.ManagedKStreams;
 import com.homeaway.streamplatform.streamregistry.streams.ManagedKafkaProducer;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
-import java.util.List;
-import java.util.Optional;
 
+@Slf4j
 public class SourceDaoImpl implements SourceDao {
 
     @NotNull
@@ -47,8 +51,49 @@ public class SourceDaoImpl implements SourceDao {
     }
 
     @Override
-    public Optional<Source> update(String streamName, String sourceName, String region) {
-        return Optional.empty();
+    public Optional<Source> upsert(Source source) {
+        AvroStreamKey avroStreamKey = AvroStreamKey.newBuilder()
+                .setStreamName(source.getStreamName())
+                .build();
+
+        Optional<Sources> avroSources = kStreams.getAvroStreamForKey(avroStreamKey);
+
+        Optional<com.homeaway.digitalplatform.streamregistry.Source> avroSourceOptional = avroSources
+            .get()
+            .getSources()
+            .stream()
+            .filter((sourceAvro) -> sourceAvro.getSourceName()
+                    .equalsIgnoreCase(source.getSourceName()))
+            .findFirst();
+
+        if (avroSourceOptional.isPresent()) {
+            // update source
+            com.homeaway.digitalplatform.streamregistry.Source updatedSource = avroSourceOptional.get();
+            updatedSource.setSourceName(source.getSourceName());
+            updatedSource.setSourceType(source.getSourceType());
+            updatedSource.setStreamSourceConfiguration(source.getStreamSourceConfiguration());
+
+            List<com.homeaway.digitalplatform.streamregistry.Source> avroSourcesWithoutTargetItem = avroSources
+                    .get()
+                    .getSources()
+                    .stream()
+                    .filter((sourceAvro) -> !sourceAvro.getSourceName()
+                            .equalsIgnoreCase(source.getSourceName())).
+                            collect(Collectors.toList());
+            avroSourcesWithoutTargetItem.add(updatedSource);
+            kafkaProducer.log(avroStreamKey, avroSourcesWithoutTargetItem);
+        } else {
+            // create a new source
+            com.homeaway.digitalplatform.streamregistry.Source newSourceAvro = com.homeaway.digitalplatform.streamregistry.Source.newBuilder()
+                    .setSourceName(source.getSourceName())
+                    .setSourceType(source.getSourceType())
+                    .setStreamSourceConfiguration(source.getStreamSourceConfiguration())
+                    .build();
+            avroSources.get().getSources().add(newSourceAvro);
+            kafkaProducer.log(avroStreamKey, avroSources);
+        }
+
+        return Optional.of(source);
     }
 
     @Override
@@ -56,61 +101,9 @@ public class SourceDaoImpl implements SourceDao {
         return Optional.empty();
     }
 
-//        private void deleteProducer(String streamName, String producerName) {
-//        Optional<AvroStream> avroStream = getAvroStreamKeyValue(streamName).getValue();
-//
-//        if (avroStream.isPresent()) {
-//            final List<com.homeaway.digitalplatform.streamregistry.Producer> withProducer = avroStream.get().getProducers();
-//
-//            // Obtains producer list size before  remove consumer
-//            final int producerInitialSize = withProducer.size();
-//
-//            // Obtains filtered producer list not containing the consumer we want to remove
-//            List<com.homeaway.digitalplatform.streamregistry.Producer> withoutProducer = withProducer
-//                    .stream()
-//                    .filter(producer -> !StreamRegistryUtils.hasActorNamed(producerName, producer::getActor))
-//                    .collect(Collectors.toList());
-//
-//            // Update stream's producer list
-//            avroStream.get().setProducers(withoutProducer);
-//
-//            // If filtered producer list size is less than initial size stream will be updated
-//            if (avroStream.get().getProducers().size() < producerInitialSize)
-//                updateAvroStream(avroStream.get());
-//            else
-//                throw new ProducerNotFoundException(producerName);
-//        } else {
-//            throw new StreamNotFoundException(streamName);
-//        }
-//    }
-
     @Override
     public void delete(String streamName, String sourceName) {
-        Optional<Source> avroStream = getAvroStreamKeyValue(streamName).getValue();
-
-        if (avroStream.isPresent()) {
-            final List<com.homeaway.digitalplatform.streamregistry.Producer> withProducer = avroStream.get().getProducers();
-
-            // Obtains producer list size before  remove consumer
-            final int producerInitialSize = withProducer.size();
-
-            // Obtains filtered producer list not containing the consumer we want to remove
-            List<com.homeaway.digitalplatform.streamregistry.Producer> withoutProducer = withProducer
-                    .stream()
-                    .filter(producer -> !StreamRegistryUtils.hasActorNamed(producerName, producer::getActor))
-                    .collect(Collectors.toList());
-
-            // Update stream's producer list
-            avroStream.get().setProducers(withoutProducer);
-
-            // If filtered producer list size is less than initial size stream will be updated
-            if (avroStream.get().getProducers().size() < producerInitialSize)
-                updateAvroStream(avroStream.get());
-            else
-                throw new ProducerNotFoundException(producerName);
-        } else {
-            throw new StreamNotFoundException(streamName);
-        }
+        // TODO
     }
 
     @Override

@@ -13,18 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.homeaway.streamplatform.streamregistry.db.dao;
+package com.homeaway.streamplatform.streamregistry.db.dao.impl;
 
-import java.util.Collection;
+public class SourceDaoImplTest {
 
-import com.google.common.collect.Multimap;
-
-import com.homeaway.streamplatform.streamregistry.model.Cluster;
-
-public interface ClusterDao {
-
-    Multimap<String, Cluster> getClusters();
-
-    Collection<Cluster> getCluster(String clusterName);
 
 }

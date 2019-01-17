@@ -34,7 +34,7 @@ protocol SourceProtocol {
   /**
   * List of all Sources for this streamName
   */
-    union {null, array<Source>} source = null;
+    union {null, array<Source>} sources = null;
 
   }
 

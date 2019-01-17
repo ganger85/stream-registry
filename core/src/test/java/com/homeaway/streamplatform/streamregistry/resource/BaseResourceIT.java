@@ -16,8 +16,7 @@
 package com.homeaway.streamplatform.streamregistry.resource;
 
 import java.io.File;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import javax.validation.Validator;
@@ -160,7 +159,6 @@ public class BaseResourceIT {
 
     private static final int DEFAULT_ZK_CONNECTION_TIMEOUT_MS = 8 * 1000;
 
-
     public static void createTopic(String topic, int partitions, int replication, Properties topicConfig) {
         log.debug("Creating topic { name: {}, partitions: {}, replication: {}, config: {} }",
                 topic, partitions, replication, topicConfig);
@@ -206,7 +204,7 @@ public class BaseResourceIT {
         producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         producerConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryURL);
-        managedKafkaProducer = new ManagedKafkaProducer(producerConfig, BaseResourceIT.topicsConfig);
+        managedKafkaProducer = new ManagedKafkaProducer(producerConfig, BaseResourceIT.topicsConfig.getProducerTopic());
         managedKafkaProducer.start();
 
         streamsConfig = new Properties();
@@ -218,7 +216,8 @@ public class BaseResourceIT {
         streamsConfig.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, kafkaStreamsConfig.getKstreamsProperties().get(VALUE_SERDE));
         streamsConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryURL);
         CompletableFuture<Boolean> initialized = new CompletableFuture<>();
-        managedKStreams = new ManagedKStreams(streamsConfig, BaseResourceIT.topicsConfig, () -> initialized.complete(true));
+        managedKStreams = new ManagedKStreams(streamsConfig, BaseResourceIT.topicsConfig.getProducerTopic(),
+                topicsConfig.getStateStoreName(), () -> initialized.complete(true));
         managedKStreams.start();
 
         consumerConfig = new Properties();
