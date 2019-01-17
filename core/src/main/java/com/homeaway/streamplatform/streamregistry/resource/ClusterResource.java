@@ -26,6 +26,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.google.common.collect.Multimap;
 import lombok.extern.slf4j.Slf4j;
 
 import com.codahale.metrics.annotation.Timed;
@@ -57,7 +58,7 @@ public class ClusterResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
     public Response getClusters() {
-        Map<String, List<Cluster>> clusters = clusterDao.getClusters();
+        Multimap<String, Cluster> clusters = clusterDao.getClusters();
         return Response.status(200).entity(clusters).build();
     }
 

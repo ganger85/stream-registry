@@ -16,14 +16,13 @@
 package com.homeaway.streamplatform.streamregistry.db.dao;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
+import com.google.common.collect.Multimap;
 import com.homeaway.streamplatform.streamregistry.model.Cluster;
 
 public interface ClusterDao {
 
-    Map<String, List<Cluster>> getClusters();
+    Multimap<String, Cluster> getClusters();
 
     Collection<Cluster> getCluster(String clusterName);
 

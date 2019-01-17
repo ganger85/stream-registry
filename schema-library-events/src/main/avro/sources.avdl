@@ -6,17 +6,36 @@ protocol SourceProtocol {
 * Source schema
 */
   record Source {
+
   /**
    * Type of source
    */
     string sourceType;
 
   /**
-  * Name of source
+  * Name of source in the Source Store
   */
     string sourceName;
 
+
     union{null,map<string>} streamSourceConfiguration = null;
+  }
+
+  /**
+  * List of all sources for a Stream
+  */
+  record Sources {
+
+  /**
+  * Stream name of the Source
+  */
+    string streamName;
+
+  /**
+  * List of all Sources for this streamName
+  */
+    union {null, array<Source>} source = null;
+
   }
 
 }

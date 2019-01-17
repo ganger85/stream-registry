@@ -32,21 +32,21 @@ import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
 import com.homeaway.streamplatform.streamregistry.configuration.TopicsConfig;
 
 @Slf4j
-public class ManagedKafkaProducer implements Managed {
+public class ManagedKafkaProducer<T> implements Managed {
 
-    private final TopicsConfig topicsConfig;
+    private final String topicName;
     private final Properties properties;
-    private Producer<AvroStreamKey, AvroStream> producer;
+    private Producer<AvroStreamKey, T> producer;
 
-    public ManagedKafkaProducer(Properties properties, TopicsConfig topicsConfig) {
+    public ManagedKafkaProducer(Properties properties, String topicName) {
         this.properties = properties;
-        this.topicsConfig = topicsConfig;
+        this.topicName = topicName;
     }
 
     @Override
     public void start() {
         producer = new KafkaProducer<>(properties);
-        log.info("Managed Kafka Producer Started with properties: " + String.valueOf(properties));
+        log.info("Managed Kafka Producer Started with properties: " + properties);
     }
 
     @Override
@@ -55,9 +55,9 @@ public class ManagedKafkaProducer implements Managed {
         log.info("Manager Kafka Producer stopped.");
     }
 
-    public void log(AvroStreamKey key, AvroStream value) {
+    public void log(AvroStreamKey key, T value) {
         try {
-            Future<RecordMetadata> result = producer.send(new ProducerRecord<>(topicsConfig.getProducerTopic(), key, value),
+            Future<RecordMetadata> result = producer.send(new ProducerRecord<>(topicName, key, value),
                     (RecordMetadata recordMetadata, Exception e) -> {
                         if (e != null) {
                             log.error("Error producing to topic={}", recordMetadata.topic(), e);
@@ -70,6 +70,6 @@ public class ManagedKafkaProducer implements Managed {
                     exception);
         }
         log.info("Message pushed to the sourceKStreamProcessorTopic Topic={} with key={} successfully",
-                topicsConfig.getProducerTopic(), String.valueOf(key));
+                topicName, key.toString());
     }
 }

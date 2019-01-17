@@ -15,54 +15,20 @@
  */
 package com.homeaway.streamplatform.streamregistry;
 
-import static io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
-import static org.apache.kafka.streams.StreamsConfig.ROCKSDB_CONFIG_SETTER_CLASS_CONFIG;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
-import javax.ws.rs.client.Client;
-
-import lombok.extern.slf4j.Slf4j;
-
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.servlets.PingServlet;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.google.common.base.Preconditions;
-
-import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import io.dropwizard.Application;
-import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
-import io.dropwizard.configuration.SubstitutingSourceProvider;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
-import io.federecio.dropwizard.swagger.SwaggerBundle;
-import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
-
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.utils.Utils;
-import org.apache.kafka.streams.state.RocksDBConfigSetter;
-import org.rocksdb.BlockBasedTableConfig;
-import org.rocksdb.Options;
-
-import com.homeaway.streamplatform.streamregistry.configuration.InfraManagerConfig;
-import com.homeaway.streamplatform.streamregistry.configuration.SchemaManagerConfig;
-import com.homeaway.streamplatform.streamregistry.configuration.StreamRegistryConfiguration;
-import com.homeaway.streamplatform.streamregistry.configuration.StreamValidatorConfig;
-import com.homeaway.streamplatform.streamregistry.configuration.TopicsConfig;
+import com.homeaway.digitalplatform.streamregistry.AvroStream;
+import com.homeaway.digitalplatform.streamregistry.Sources;
+import com.homeaway.streamplatform.streamregistry.configuration.*;
 import com.homeaway.streamplatform.streamregistry.db.dao.KafkaManager;
 import com.homeaway.streamplatform.streamregistry.db.dao.RegionDao;
 import com.homeaway.streamplatform.streamregistry.db.dao.StreamClientDao;
 import com.homeaway.streamplatform.streamregistry.db.dao.StreamDao;
-import com.homeaway.streamplatform.streamregistry.db.dao.impl.ConsumerDaoImpl;
-import com.homeaway.streamplatform.streamregistry.db.dao.impl.KafkaManagerImpl;
-import com.homeaway.streamplatform.streamregistry.db.dao.impl.ProducerDaoImpl;
-import com.homeaway.streamplatform.streamregistry.db.dao.impl.RegionDaoImpl;
-import com.homeaway.streamplatform.streamregistry.db.dao.impl.StreamDaoImpl;
+import com.homeaway.streamplatform.streamregistry.db.dao.impl.*;
 import com.homeaway.streamplatform.streamregistry.extensions.schema.SchemaManager;
 import com.homeaway.streamplatform.streamregistry.extensions.validation.StreamValidator;
 import com.homeaway.streamplatform.streamregistry.health.StreamRegistryHealthCheck;
@@ -74,6 +40,29 @@ import com.homeaway.streamplatform.streamregistry.resource.StreamResource;
 import com.homeaway.streamplatform.streamregistry.streams.ManagedInfraManager;
 import com.homeaway.streamplatform.streamregistry.streams.ManagedKStreams;
 import com.homeaway.streamplatform.streamregistry.streams.ManagedKafkaProducer;
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import io.dropwizard.Application;
+import io.dropwizard.client.JerseyClientBuilder;
+import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
+import io.dropwizard.configuration.SubstitutingSourceProvider;
+import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.setup.Environment;
+import io.federecio.dropwizard.swagger.SwaggerBundle;
+import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.utils.Utils;
+import org.apache.kafka.streams.state.RocksDBConfigSetter;
+import org.rocksdb.BlockBasedTableConfig;
+import org.rocksdb.Options;
+
+import javax.ws.rs.client.Client;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+
+import static io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
+import static org.apache.kafka.streams.StreamsConfig.ROCKSDB_CONFIG_SETTER_CLASS_CONFIG;
 
 /**
  * This is the main DropWizard application that bootstraps DropWizard, wires up the app,
@@ -95,7 +84,8 @@ public class StreamRegistryApplication extends Application<StreamRegistryConfigu
 
     @Override
     public void initialize(final Bootstrap<StreamRegistryConfiguration> bootstrap) {
-        // EnvironmentVariableSubstitutor enables EnvVariables to be substituted into the configuration before initialization
+        // EnvironmentVariableSubstitutor enables EnvVariables to be substituted into
+        // the configuration before initialization
         bootstrap.setConfigurationSourceProvider(
                 new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
                         new EnvironmentVariableSubstitutor(false)
@@ -124,8 +114,14 @@ public class StreamRegistryApplication extends Application<StreamRegistryConfigu
         kstreamsProperties.put(ROCKSDB_CONFIG_SETTER_CLASS_CONFIG, CustomRocksDBConfig.class);
         TopicsConfig topicsConfig = configuration.getTopicsConfig();
 
-        ManagedKafkaProducer managedProducer = new ManagedKafkaProducer(producerProperties, topicsConfig);
-        ManagedKStreams managedKStreams = new ManagedKStreams(kstreamsProperties, topicsConfig);
+        ManagedKafkaProducer<AvroStream> managedProducer = new ManagedKafkaProducer(producerProperties, topicsConfig.getProducerTopic());
+        ManagedKafkaProducer<Sources> managedSourceProducer = new ManagedKafkaProducer(producerProperties, topicsConfig.getStreamSourceTopic());
+
+        ManagedKStreams managedKStreams = new ManagedKStreams(kstreamsProperties,
+                topicsConfig.getProducerTopic(), topicsConfig.getStateStoreName(), null);
+
+        ManagedKStreams managedKStreamsForSource = new ManagedKStreams(kstreamsProperties,
+                topicsConfig.getStreamSourceTopic(), topicsConfig.getStreamSourceStateStoreName(), null);
 
         InfraManagerConfig infraManagerConfig = configuration.getInfraManagerConfig();
         String infraManagerClassName = infraManagerConfig.getClassName();
