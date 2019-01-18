@@ -19,14 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -35,14 +28,11 @@ import lombok.extern.slf4j.Slf4j;
 import com.codahale.metrics.annotation.Timed;
 
 import io.dropwizard.jersey.errors.ErrorMessage;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.*;
 
 import org.apache.avro.SchemaParseException;
 
+import com.homeaway.streamplatform.streamregistry.db.dao.SourceDao;
 import com.homeaway.streamplatform.streamregistry.db.dao.StreamClientDao;
 import com.homeaway.streamplatform.streamregistry.db.dao.StreamDao;
 import com.homeaway.streamplatform.streamregistry.exceptions.StreamNotFoundException;
@@ -67,11 +57,16 @@ public class StreamResource {
     private final StreamDao streamDao;
     private final StreamClientDao<Producer> producerDao;
     private final StreamClientDao<Consumer> consumerDao;
+    private final SourceDao sourceDao;
 
-    public StreamResource(StreamDao streamDao, StreamClientDao<Producer> producerDao, StreamClientDao<Consumer> consumerDao) {
+    public StreamResource(StreamDao streamDao,
+                          StreamClientDao<Producer> producerDao,
+                          StreamClientDao<Consumer> consumerDao,
+                          SourceDao sourceDao) {
         this.streamDao = streamDao;
         this.producerDao = producerDao;
         this.consumerDao = consumerDao;
+        this.sourceDao = sourceDao;
     }
 
     @PUT
@@ -259,4 +254,6 @@ public class StreamResource {
         return new ConsumerResource(streamDao, consumerDao);
     }
 
+    @Path("/{streamName}/sources")
+    public SourceResource getSourceResource() { return new SourceResource(sourceDao);}
 }

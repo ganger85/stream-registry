@@ -31,71 +31,51 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-import com.homeaway.streamplatform.streamregistry.db.dao.StreamClientDao;
-import com.homeaway.streamplatform.streamregistry.db.dao.StreamDao;
-import com.homeaway.streamplatform.streamregistry.exceptions.ClusterNotFoundException;
-import com.homeaway.streamplatform.streamregistry.exceptions.ProducerNotFoundException;
-import com.homeaway.streamplatform.streamregistry.exceptions.StreamNotFoundException;
-import com.homeaway.streamplatform.streamregistry.exceptions.UnknownRegionException;
-import com.homeaway.streamplatform.streamregistry.model.Producer;
-import com.homeaway.streamplatform.streamregistry.model.Stream;
+import com.homeaway.streamplatform.streamregistry.db.dao.SourceDao;
+import com.homeaway.streamplatform.streamregistry.exceptions.SourceNotFoundException;
+import com.homeaway.streamplatform.streamregistry.model.Source;
 import com.homeaway.streamplatform.streamregistry.utils.ResourceUtils;
 
 @Slf4j
 public class SourceResource {
 
-    private final StreamDao streamDao;
-
-    private final StreamClientDao<Producer> producerDao;
+    private final SourceDao sourceDao;
 
     @SuppressWarnings("WeakerAccess")
-    public SourceResource(StreamDao streamDao, StreamClientDao<Producer> producerDao) {
-        this.streamDao = streamDao;
-        this.producerDao = producerDao;
+    public SourceResource(SourceDao sourceDao) {
+        this.sourceDao = sourceDao;
     }
 
     @PUT
     @ApiOperation(
-        value = "Register producer",
-        notes = "Register a producer with a stream. Typically made at beginning of app life-cycle.",
-        tags = "producers",
-        response = Producer.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Returns Producer information", response = Producer.class),
+        value = "Register source",
+        notes = "Register a source with a stream",
+        tags = "sources",
+        response = Source.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Returns Source information", response = Source.class),
         @ApiResponse(code = 404, message = "Stream not found"),
-        @ApiResponse(code = 412, message = "unsupported region"),
+        @ApiResponse(code = 412, message = "Unsupported region"),
         @ApiResponse(code = 500, message = "Error Occurred while getting data") })
-    @Path("/{producerName}/regions/{region}")
+    @Path("/{sourceName}")
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
-    public Response upsertProducer(@ApiParam(value = "name of the stream", required = true) @PathParam("streamName") String streamName,
-        @ApiParam(value = "name of the producer", required = true) @PathParam("producerName") String producerName,
-        @ApiParam(value = "name of the region. All region values available at /regions endpoint",
-            required = true) @PathParam("region") String region) {
+    public Response upsertSource(@ApiParam(value = "name of the stream", required = true) @PathParam("streamName") String streamName,
+        @ApiParam(value = "name of the source", required = true) @PathParam("sourceName") String sourceName) {
         try {
-            Optional<Stream> stream = streamDao.getStream(streamName);
-            if (!stream.isPresent()) {
-                return ResourceUtils.streamNotFound(streamName);
+            Optional<Source> source = sourceDao.get(streamName, sourceName);
+
+            if (!source.isPresent()) {
+                return ResourceUtils.notFound(sourceName);
             }
-            Optional<Producer> producer = producerDao.update(streamName, producerName, region);
-            if (producer.isPresent()) {
-                log.info(" Producer upserted, producerName: " + producerName);
-                return Response.ok().entity(producer.get()).build();
+
+            Optional<Source> sourceOptional = sourceDao.upsert(source.get());
+            if (sourceOptional.isPresent()) {
+                log.info(" Source upserted, sourceName: " + sourceName);
+                return Response.ok().entity(source.get()).build();
             }
         } catch (IllegalArgumentException e) {
             log.error("Input is wrong.", e);
             throw new BadRequestException("Input Validation failed. Message=" + e.getMessage(), e);
-        } catch (UnknownRegionException re) {
-            log.warn("Region not supported " + region);
-            return Response.status(Response.Status.PRECONDITION_FAILED)
-                .type("text/plain")
-                .entity("Unsupported region: " + re.getRegion() + ". Hit /regions to get the list of all supported regions")
-                .build();
-        } catch (ClusterNotFoundException ce) {
-            log.warn("Region {} is not supported for the stream {}", region, streamName);
-            return Response.status(Response.Status.PRECONDITION_FAILED)
-                .type("text/plain")
-                .entity("This region: " + region + " is not available for the stream")
-                .build();
         } catch (Exception e) {
             log.error("Error occurred while getting data from Stream Registry.", e);
             throw new InternalServerErrorException("Error occurred while updating the Producer in Stream Registry", e);
@@ -104,30 +84,32 @@ public class SourceResource {
     }
 
     @GET
-    @Path("/{producerName}")
+    @Path("/{sourceName}")
     @ApiOperation(
-        value = "Get producer",
-        notes = "Get a producer associated with the stream",
-        tags = "producers",
-        response = Producer.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Returns Producer information", response = Producer.class),
-        @ApiResponse(code = 404, message = "Stream or Producer not found"),
+        value = "Get source",
+        notes = "Get a source associated with the stream",
+        tags = "sources",
+        response = Source.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Returns Source information", response = Source.class),
+        @ApiResponse(code = 404, message = "Stream or Source not found"),
         @ApiResponse(code = 500, message = "Error Occurred while getting data") })
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
-    public Response getProducer(@ApiParam(value = "name of the stream", required = true) @PathParam("streamName") String streamName,
-        @ApiParam(value = "name of the producer", required = true) @PathParam("producerName") String producerName) {
-        Optional<Stream> stream = streamDao.getStream(streamName);
+    public Response getSource(@ApiParam(value = "name of the stream", required = true) @PathParam("streamName") String streamName,
+        @ApiParam(value = "name of the source", required = true) @PathParam("sourceName") String sourceName) {
+
+        Optional<Source> source = sourceDao.get(streamName, sourceName);
+
         try {
-            if (!stream.isPresent()) {
-                return ResourceUtils.streamNotFound(streamName);
+            if (!source.isPresent()) {
+                return ResourceUtils.notFound(sourceName);
             }
-            Optional<Producer> responseProducer = producerDao.get(streamName, producerName);
-            if (!responseProducer.isPresent()) {
-                log.warn("Producer Not Found: " + producerName);
-                return ResourceUtils.notFound("Producer not found " + producerName);
+            Optional<Source> sourceResponse = sourceDao.get(streamName, sourceName);
+            if (!sourceResponse.isPresent()) {
+                log.warn("Source Not Found: " + sourceName);
+                return ResourceUtils.notFound("Producer not found " + sourceName);
             }
-            return Response.ok().entity(responseProducer.get()).build();
+            return Response.ok().entity(sourceResponse.get()).build();
         } catch (Exception e) {
             log.error("Error occurred while getting data from Stream Registry", e);
             throw new InternalServerErrorException("Error occurred while getting data from Stream Registry", e);
@@ -136,23 +118,21 @@ public class SourceResource {
 
     @DELETE
     @ApiOperation(
-        value = "De-register producer",
-        notes = "De-Registers a producer from a stream. Typically made at end of app life-cycle.",
-        tags = "producers")
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Producer successfully deleted"),
-        @ApiResponse(code = 404, message = "Stream or Producer not found"),
+        value = "De-register source",
+        notes = "De-Registers a source from a stream",
+        tags = "sources")
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Source successfully deleted"),
+        @ApiResponse(code = 404, message = "Stream or source not found"),
         @ApiResponse(code = 500, message = "Error Occurred while getting data") })
-    @Path("/{producerName}")
+    @Path("/{sourceName}")
     @Timed
     public Response deleteProducer(@ApiParam(value = "name of the stream", required = true) @PathParam("streamName") String streamName,
-        @ApiParam(value = "name of the producer", required = true) @PathParam("producerName") String producerName) {
+        @ApiParam(value = "name of the producer", required = true) @PathParam("sourceName") String sourceName) {
         try {
-            producerDao.delete(streamName, producerName);
-        } catch (StreamNotFoundException se) {
-            return ResourceUtils.streamNotFound(streamName);
-        } catch (ProducerNotFoundException pe) {
-            log.warn("Producer not found ", producerName);
-            return ResourceUtils.notFound("Producer not found " + pe.getProducerName());
+            sourceDao.delete(streamName, sourceName);
+        } catch (SourceNotFoundException pe) {
+            log.warn("Source not found ", sourceName);
+            return ResourceUtils.notFound("Source not found " + sourceName);
         } catch (Exception e) {
             log.error("Error occurred while getting data from Stream Registry.", e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -160,31 +140,30 @@ public class SourceResource {
         return Response
             .ok()
             .type("text/plain")
-            .entity("Producer deleted " + producerName)
+            .entity("Source deleted " + sourceName)
             .build();
     }
 
     @GET
     @Path("/")
     @ApiOperation(
-        value = "Get producers",
-        notes = "Gets a list of producers for a given stream",
-        tags = "producers",
-        response = Producer.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Returns Producer information", response = Producer.class),
+        value = "Get all sources for a given Stream",
+        notes = "Gets a list of sources for a given stream",
+        tags = "sources",
+        response = Source.class)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Returns Source information", response = Source.class),
         @ApiResponse(code = 500, message = "Error Occurred while getting data"),
         @ApiResponse(code = 404, message = "Stream not found") })
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
-    public Response getAllProducers(
-        @ApiParam(value = "Stream Name corresponding to the producer", required = true) @PathParam("streamName") String streamName) {
+    public Response getAllSources(
+        @ApiParam(value = "Stream Name corresponding to the source", required = true) @PathParam("streamName") String streamName) {
         try {
-            Optional<Stream> stream = streamDao.getStream(streamName);
-            if (!stream.isPresent()) {
+            Optional<List<Source>> sources = sourceDao.getAll(streamName);
+            if (!sources.isPresent()) {
                 return ResourceUtils.streamNotFound(streamName);
             }
-            List<Producer> listProducer = producerDao.getAll(streamName);
-            return Response.ok().entity(listProducer).build();
+            return Response.ok().entity(sources).build();
         } catch (Exception e) {
             log.error("Error occurred while getting data from Stream Registry.", e);
             throw new InternalServerErrorException("Error occurred while getting data from Stream Registry");

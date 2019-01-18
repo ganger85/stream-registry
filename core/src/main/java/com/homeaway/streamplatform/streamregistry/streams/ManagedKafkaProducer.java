@@ -27,14 +27,12 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
-import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
-
 @Slf4j
-public class ManagedKafkaProducer<T> implements Managed {
+public class ManagedKafkaProducer<K, V> implements Managed, StreamProducer<K, V> {
 
     private final String topicName;
     private final Properties properties;
-    private Producer<AvroStreamKey, T> producer;
+    private Producer<K, V> producer;
 
     public ManagedKafkaProducer(Properties properties, String topicName) {
         this.properties = properties;
@@ -53,7 +51,8 @@ public class ManagedKafkaProducer<T> implements Managed {
         log.info("Manager Kafka Producer stopped.");
     }
 
-    public void log(AvroStreamKey key, T value) {
+    @Override
+    public void log(K key, V value) {
         try {
             Future<RecordMetadata> result = producer.send(new ProducerRecord<>(topicName, key, value),
                     (RecordMetadata recordMetadata, Exception e) -> {
@@ -69,5 +68,6 @@ public class ManagedKafkaProducer<T> implements Managed {
         }
         log.info("Message pushed to the sourceKStreamProcessorTopic Topic={} with key={} successfully",
                 topicName, key.toString());
+
     }
 }

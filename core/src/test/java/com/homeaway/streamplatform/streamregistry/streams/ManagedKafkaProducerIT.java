@@ -40,7 +40,7 @@ public class ManagedKafkaProducerIT extends BaseResourceIT {
         AbstractMap.SimpleEntry<AvroStreamKey, AvroStream> avroMessage = new AvroModelBuilder().buildSampleMessage(streamName, OperationType.UPSERT);
 
         // Push a message
-        managedKafkaProducer.log(avroMessage.getKey(), avroMessage.getValue());
+        streamProducer.log(avroMessage.getKey(), avroMessage.getValue());
 
         // Verify whether the message is available in the topic
         List<KeyValue<AvroStreamKey, AvroStream>> keyValues = IntegrationTestUtils.readKeyValues(topicsConfig.getProducerTopic(), consumerConfig, 400, 1);

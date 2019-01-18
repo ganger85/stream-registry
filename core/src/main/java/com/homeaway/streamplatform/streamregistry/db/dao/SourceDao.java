@@ -24,10 +24,10 @@ public interface SourceDao {
 
     Optional<Source> upsert(Source source);
 
-    Optional<Source> get(String streamName, String actorName);
+    Optional<Source> get(String streamName, String sourceName);
 
     void delete(String streamName, String sourceName);
 
-    List<Source> getAllSources(String streamName);
+    Optional<List<Source>> getAll(String streamName);
 
 }

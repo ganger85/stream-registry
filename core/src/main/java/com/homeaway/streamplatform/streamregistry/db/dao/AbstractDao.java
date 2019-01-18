@@ -15,12 +15,7 @@
  */
 package com.homeaway.streamplatform.streamregistry.db.dao;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,20 +26,14 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
-import com.homeaway.digitalplatform.streamregistry.Actor;
-import com.homeaway.digitalplatform.streamregistry.AvroStream;
-import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
-import com.homeaway.digitalplatform.streamregistry.ClusterKey;
-import com.homeaway.digitalplatform.streamregistry.ClusterValue;
-import com.homeaway.digitalplatform.streamregistry.OperationType;
-import com.homeaway.digitalplatform.streamregistry.RegionStreamConfiguration;
+import com.homeaway.digitalplatform.streamregistry.*;
 import com.homeaway.streamplatform.streamregistry.exceptions.ClusterNotFoundException;
 import com.homeaway.streamplatform.streamregistry.provider.InfraManager;
 import com.homeaway.streamplatform.streamregistry.streams.ManagedKStreams;
 import com.homeaway.streamplatform.streamregistry.streams.ManagedKafkaProducer;
 
 @Slf4j
-public abstract class AbstractDao {
+public abstract class AbstractDao{
 
     public static final String PRIMARY_HINT = "primary";
     public static final String CLUSTER_NAME = "cluster.name";
@@ -54,7 +43,7 @@ public abstract class AbstractDao {
         UPDATE
     }
 
-    protected final ManagedKafkaProducer kafkaProducer;
+    protected final ManagedKafkaProducer<AvroStreamKey, AvroStream> kafkaProducer;
 
     protected final ManagedKStreams kStreams;
 
