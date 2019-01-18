@@ -8,16 +8,25 @@ protocol SourceProtocol {
   record Source {
 
   /**
-   * Type of source
-   */
-    string sourceType;
+  * Stream name of the Source
+  */
+    string streamName;
+
 
   /**
   * Name of source in the Source Store
   */
     string sourceName;
 
+  /**
+   * Type of source
+   */
+    string sourceType;
 
+   /**
+   * Any additional configuration as a key, value map
+   * This would be sourceType specific.
+   */
     union{null,map<string>} streamSourceConfiguration = null;
   }
 

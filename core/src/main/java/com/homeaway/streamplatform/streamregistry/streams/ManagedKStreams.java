@@ -87,7 +87,7 @@ public class ManagedKStreams<T> implements Managed {
         return Optional.ofNullable(view.get(key));
     }
 
-    public KeyValueIterator<AvroStreamKey, T> getAllStreams(){
+    public KeyValueIterator<AvroStreamKey, T> getAllValues(){
         return view.all();
     }
 }

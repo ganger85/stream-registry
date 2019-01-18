@@ -15,5 +15,36 @@
  */
 package com.homeaway.streamplatform.streamregistry.resource;
 
+
+
+
+import org.junit.Ignore;
+import org.junit.Test;
+import org.mockito.Mock;
+
+import com.homeaway.streamplatform.streamregistry.db.dao.SourceDao;
+import com.homeaway.streamplatform.streamregistry.db.dao.impl.SourceDaoImpl;
+import com.homeaway.streamplatform.streamregistry.streams.ManagedKStreams;
+import com.homeaway.streamplatform.streamregistry.streams.ManagedKafkaProducer;
+
+// Unit tests
 public class SourceResourceTest {
+
+    @Mock
+    private ManagedKafkaProducer kafkaProducer;
+
+    @Mock
+    private ManagedKStreams kstreams;
+
+    @SuppressWarnings("unchecked")
+    @Ignore
+    @Test
+    public void testGetClusters(){
+
+        SourceDao sourceDao = new SourceDaoImpl(kafkaProducer, kstreams, Initializers.infraManagerImplStub);
+
+    }
+
+
+
 }

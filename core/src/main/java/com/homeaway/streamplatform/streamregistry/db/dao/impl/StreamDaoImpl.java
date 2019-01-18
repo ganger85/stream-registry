@@ -284,7 +284,7 @@ public class StreamDaoImpl extends AbstractDao implements StreamDao, StreamValid
     public List<Stream> getAllStreams() {
         List<Stream> streamList = new ArrayList<>();
         log.info("Pulling stream information from local instance's state-store");
-        KeyValueIterator<AvroStreamKey, AvroStream> allStreams = (KeyValueIterator<AvroStreamKey, AvroStream>)kStreams.getAllStreams();
+        KeyValueIterator<AvroStreamKey, AvroStream> allStreams = (KeyValueIterator<AvroStreamKey, AvroStream>)kStreams.getAllValues();
         allStreams.forEachRemaining(avroStream -> streamList.add(AvroToJsonDTO.convertAvroToJson(avroStream.value)));
         return streamList;
     }

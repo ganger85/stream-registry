@@ -50,12 +50,10 @@ import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.Options;
 
 import com.homeaway.digitalplatform.streamregistry.AvroStream;
+import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
 import com.homeaway.digitalplatform.streamregistry.Sources;
 import com.homeaway.streamplatform.streamregistry.configuration.*;
-import com.homeaway.streamplatform.streamregistry.db.dao.KafkaManager;
-import com.homeaway.streamplatform.streamregistry.db.dao.RegionDao;
-import com.homeaway.streamplatform.streamregistry.db.dao.StreamClientDao;
-import com.homeaway.streamplatform.streamregistry.db.dao.StreamDao;
+import com.homeaway.streamplatform.streamregistry.db.dao.*;
 import com.homeaway.streamplatform.streamregistry.db.dao.impl.*;
 import com.homeaway.streamplatform.streamregistry.extensions.schema.SchemaManager;
 import com.homeaway.streamplatform.streamregistry.extensions.validation.StreamValidator;
@@ -106,6 +104,7 @@ public class StreamRegistryApplication extends Application<StreamRegistryConfigu
         metricRegistry = bootstrap.getMetricRegistry();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void run(final StreamRegistryConfiguration configuration, final Environment environment) {
         Properties producerProperties = new Properties();
@@ -119,14 +118,14 @@ public class StreamRegistryApplication extends Application<StreamRegistryConfigu
         kstreamsProperties.put(ROCKSDB_CONFIG_SETTER_CLASS_CONFIG, CustomRocksDBConfig.class);
         TopicsConfig topicsConfig = configuration.getTopicsConfig();
 
-        ManagedKafkaProducer<AvroStream> managedProducer = new ManagedKafkaProducer(producerProperties, topicsConfig.getProducerTopic());
-        ManagedKafkaProducer<Sources> managedSourceProducer = new ManagedKafkaProducer(producerProperties, topicsConfig.getStreamSourceTopic());
+        ManagedKafkaProducer<AvroStreamKey, AvroStream> streamProducer = new ManagedKafkaProducer(producerProperties, topicsConfig.getProducerTopic());
+        ManagedKafkaProducer<AvroStreamKey, Sources> sourceProducer = new ManagedKafkaProducer(producerProperties, topicsConfig.getStreamSourceTopic());
 
-        ManagedKStreams<AvroStream> managedKStreams = new ManagedKStreams(kstreamsProperties,
-                topicsConfig.getProducerTopic(), topicsConfig.getStateStoreName(), null);
+        ManagedKStreams<AvroStream> streamProcessor = new ManagedKStreams(kstreamsProperties,
+                topicsConfig.getProducerTopic(), topicsConfig.getProducerStateStore(), null);
 
-        ManagedKStreams<Sources> managedKStreamsForSource = new ManagedKStreams(kstreamsProperties,
-                topicsConfig.getStreamSourceTopic(), topicsConfig.getStreamSourceStateStoreName(), null);
+        ManagedKStreams<Sources> sourceProcessor = new ManagedKStreams(kstreamsProperties,
+                topicsConfig.getStreamSourceTopic(), topicsConfig.getStreamSourceStateStore(), null);
 
         InfraManagerConfig infraManagerConfig = configuration.getInfraManagerConfig();
         String infraManagerClassName = infraManagerConfig.getClassName();
@@ -143,8 +142,8 @@ public class StreamRegistryApplication extends Application<StreamRegistryConfigu
         }
         ManagedInfraManager managedInfraManager = new ManagedInfraManager(infraManager);
 
-        environment.lifecycle().manage(managedProducer);
-        environment.lifecycle().manage(managedKStreams);
+        environment.lifecycle().manage(streamProducer);
+        environment.lifecycle().manage(streamProcessor);
         environment.lifecycle().manage(managedInfraManager);
 
         // TODO: Check if State Store is Initialized (#98)
@@ -174,16 +173,17 @@ public class StreamRegistryApplication extends Application<StreamRegistryConfigu
 
         SchemaManager schemaManager = loadSchemaManager(configuration);
 
-        StreamDao streamDao = new StreamDaoImpl(managedProducer, managedKStreams, env, regionDao, infraManager, kafkaManager, streamValidator, schemaManager);
-        StreamClientDao<Producer> producerDao = new ProducerDaoImpl(managedProducer, managedKStreams, env, regionDao, infraManager, kafkaManager);
-        StreamClientDao<Consumer> consumerDao = new ConsumerDaoImpl(managedProducer, managedKStreams, env, regionDao, infraManager, kafkaManager);
+        StreamDao streamDao = new StreamDaoImpl(streamProducer, streamProcessor, env, regionDao, infraManager, kafkaManager, streamValidator, schemaManager);
+        StreamClientDao<Producer> producerDao = new ProducerDaoImpl(streamProducer, streamProcessor, env, regionDao, infraManager, kafkaManager);
+        StreamClientDao<Consumer> consumerDao = new ConsumerDaoImpl(streamProducer, streamProcessor, env, regionDao, infraManager, kafkaManager);
+        SourceDao sourceDao = new SourceDaoImpl(sourceProducer, sourceProcessor, infraManager);
 
-        StreamResource streamResource = new StreamResource(streamDao, producerDao, consumerDao);
+        StreamResource streamResource = new StreamResource(streamDao, producerDao, consumerDao, sourceDao);
         environment.jersey().register(streamResource);
         environment.jersey().register(new RegionResource(regionDao));
 
         environment.getApplicationContext().addServlet(PingServlet.class, "/ping");
-        StreamRegistryHealthCheck streamRegistryHealthCheck = new StreamRegistryHealthCheck(managedKStreams, streamResource, metricRegistry);
+        StreamRegistryHealthCheck streamRegistryHealthCheck = new StreamRegistryHealthCheck(streamProcessor, streamResource, metricRegistry);
 
         environment.healthChecks().register("streamRegistryHealthCheck", streamRegistryHealthCheck);
 
@@ -240,7 +240,7 @@ public class StreamRegistryApplication extends Application<StreamRegistryConfigu
                 "schema manager class must be defined");
 
         Preconditions.checkState(schemaManagerConfig.getProperties() != null
-                && schemaManagerConfig.getProperties().containsKey(SCHEMA_REGISTRY_URL_CONFIG),
+                        && schemaManagerConfig.getProperties().containsKey(SCHEMA_REGISTRY_URL_CONFIG),
                 "schemaManagerConfig properties must define schema.registry.url");
         try {
             SchemaManager schemaManager = Utils.newInstance(schemaManagerClass, SchemaManager.class);

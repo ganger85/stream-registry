@@ -59,16 +59,8 @@ import com.homeaway.streamplatform.streamregistry.configuration.KafkaProducerCon
 import com.homeaway.streamplatform.streamregistry.configuration.KafkaStreamsConfig;
 import com.homeaway.streamplatform.streamregistry.configuration.StreamRegistryConfiguration;
 import com.homeaway.streamplatform.streamregistry.configuration.TopicsConfig;
-import com.homeaway.streamplatform.streamregistry.db.dao.AbstractDao;
-import com.homeaway.streamplatform.streamregistry.db.dao.KafkaManager;
-import com.homeaway.streamplatform.streamregistry.db.dao.RegionDao;
-import com.homeaway.streamplatform.streamregistry.db.dao.StreamClientDao;
-import com.homeaway.streamplatform.streamregistry.db.dao.StreamDao;
-import com.homeaway.streamplatform.streamregistry.db.dao.impl.ConsumerDaoImpl;
-import com.homeaway.streamplatform.streamregistry.db.dao.impl.KafkaManagerImpl;
-import com.homeaway.streamplatform.streamregistry.db.dao.impl.ProducerDaoImpl;
-import com.homeaway.streamplatform.streamregistry.db.dao.impl.RegionDaoImpl;
-import com.homeaway.streamplatform.streamregistry.db.dao.impl.StreamDaoImpl;
+import com.homeaway.streamplatform.streamregistry.db.dao.*;
+import com.homeaway.streamplatform.streamregistry.db.dao.impl.*;
 import com.homeaway.streamplatform.streamregistry.extensions.schema.SchemaManager;
 import com.homeaway.streamplatform.streamregistry.extensions.validation.StreamValidator;
 import com.homeaway.streamplatform.streamregistry.extensions.validator.StreamValidatorIT;
@@ -118,9 +110,13 @@ public class BaseResourceIT {
     // THIS IS A TEMPORARY WORKAROUND for now... centralizing here so that we can soon remove it
     protected static final int TEST_SLEEP_WAIT_MS = 80;
 
-    protected static ManagedKStreams managedKStreams;
+    protected static ManagedKafkaProducer streamProducer;
 
-    protected static ManagedKafkaProducer managedKafkaProducer;
+    protected static ManagedKafkaProducer sourceProducer;
+
+    protected static ManagedKStreams streamProcessor;
+
+    protected static ManagedKStreams sourceProcessor;
 
     protected static StreamResource streamResource;
 
@@ -194,7 +190,7 @@ public class BaseResourceIT {
 
         BaseResourceIT.topicsConfig = new TopicsConfig();
         BaseResourceIT.topicsConfig.setProducerTopic(producerTopic);
-        BaseResourceIT.topicsConfig.setStateStoreName(topicsConfig.getStateStoreName());
+        BaseResourceIT.topicsConfig.setProducerStateStore(topicsConfig.getProducerStateStore());
 
         infraManager = buildInfraManager();
 
@@ -204,8 +200,10 @@ public class BaseResourceIT {
         producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         producerConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryURL);
-        managedKafkaProducer = new ManagedKafkaProducer(producerConfig, BaseResourceIT.topicsConfig.getProducerTopic());
-        managedKafkaProducer.start();
+        streamProducer = new ManagedKafkaProducer(producerConfig, BaseResourceIT.topicsConfig.getProducerTopic());
+        sourceProducer = new ManagedKafkaProducer(producerConfig, BaseResourceIT.topicsConfig.getStreamSourceTopic());
+
+        streamProducer.start();
 
         streamsConfig = new Properties();
         KafkaStreamsConfig kafkaStreamsConfig = configuration.getKafkaStreamsConfig();
@@ -216,9 +214,13 @@ public class BaseResourceIT {
         streamsConfig.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, kafkaStreamsConfig.getKstreamsProperties().get(VALUE_SERDE));
         streamsConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryURL);
         CompletableFuture<Boolean> initialized = new CompletableFuture<>();
-        managedKStreams = new ManagedKStreams(streamsConfig, BaseResourceIT.topicsConfig.getProducerTopic(),
-                topicsConfig.getStateStoreName(), () -> initialized.complete(true));
-        managedKStreams.start();
+        streamProcessor = new ManagedKStreams(streamsConfig, BaseResourceIT.topicsConfig.getProducerTopic(),
+                topicsConfig.getProducerStateStore(), () -> initialized.complete(true));
+
+        sourceProcessor = new ManagedKStreams(streamsConfig, BaseResourceIT.topicsConfig.getStreamSourceTopic(),
+                topicsConfig.getStreamSourceStateStore(), () -> initialized.complete(true));
+
+        streamProcessor.start();
 
         consumerConfig = new Properties();
         consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -250,13 +252,14 @@ public class BaseResourceIT {
         configuration.getSchemaManagerConfig().getProperties().put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryURL);
         SchemaManager schemaManager = StreamRegistryApplication.loadSchemaManager(configuration);
 
-        StreamDao streamDao = new StreamDaoImpl(managedKafkaProducer, managedKStreams, env, regionDao,
+        StreamDao streamDao = new StreamDaoImpl(streamProducer, streamProcessor, env, regionDao,
             infraManager, kafkaManager, streamValidator, schemaManager);
-        StreamClientDao<Producer> producerDao = new ProducerDaoImpl(managedKafkaProducer, managedKStreams, env, regionDao,
+        StreamClientDao<Producer> producerDao = new ProducerDaoImpl(streamProducer, streamProcessor, env, regionDao,
             infraManager, kafkaManager);
-        StreamClientDao<Consumer> consumerDao = new ConsumerDaoImpl(managedKafkaProducer, managedKStreams, env, regionDao,
+        StreamClientDao<Consumer> consumerDao = new ConsumerDaoImpl(streamProducer, streamProcessor, env, regionDao,
             infraManager, kafkaManager);
-        streamResource = new StreamResource(streamDao, producerDao, consumerDao);
+        SourceDao sourceDao = new SourceDaoImpl(sourceProducer, sourceProcessor, infraManager);
+        streamResource = new StreamResource(streamDao, producerDao, consumerDao, sourceDao);
         producerResource = new ProducerResource(streamDao, producerDao);
         consumerResource = new ConsumerResource(streamDao, consumerDao);
 
@@ -343,8 +346,8 @@ public class BaseResourceIT {
     // TODO Why do we start and stop kstreams on each integration test ? Shouldn't this be part of the server
     @AfterClass
     public static void tearDown() throws Exception {
-        managedKStreams.stop();
-        managedKafkaProducer.stop();
+        streamProcessor.stop();
+        streamProducer.stop();
         infraManager.stop();
         ZKCLIENT.close();
     }
