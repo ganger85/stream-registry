@@ -15,16 +15,16 @@
  */
 package com.homeaway.streamplatform.streamregistry.resource;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.homeaway.digitalplatform.streamregistry.ClusterKey;
-import com.homeaway.digitalplatform.streamregistry.ClusterValue;
+import com.homeaway.digitalplatform.streamregistry.*;
 
 public class Initializers {
 
-    protected static InfraManagerImplStub infraManagerImplStub;
+    protected final static InfraManagerImplStub infraManagerImplStub;
 
     static {
 
@@ -58,7 +58,9 @@ public class Initializers {
         infraManagerImplStub = new InfraManagerImplStub();
 
         Collections.unmodifiableMap(infraManagerMap)
-                .forEach((k,v) -> infraManagerImplStub.addCluster(k,v));
+                .forEach((k, v) -> infraManagerImplStub.addCluster(k, v));
+
+
 
     }
 }
