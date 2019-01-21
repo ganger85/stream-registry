@@ -262,7 +262,7 @@ public class BaseResourceIT {
             infraManager, kafkaManager);
         StreamClientDao<Consumer> consumerDao = new ConsumerDaoImpl(streamProducer, streamProcessor, env, regionDao,
             infraManager, kafkaManager);
-        SourceDao sourceDao = new SourceDaoImpl(sourceProducer, sourceProcessor, infraManager);
+        SourceDao sourceDao = new SourceDaoImpl(sourceProducer, sourceProcessor.getView());
         streamResource = new StreamResource(streamDao, producerDao, consumerDao, sourceDao);
         producerResource = new ProducerResource(streamDao, producerDao);
         consumerResource = new ConsumerResource(streamDao, consumerDao);

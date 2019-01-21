@@ -15,22 +15,19 @@
  */
 package com.homeaway.streamplatform.streamregistry.db.dao.impl;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import javax.validation.constraints.NotNull;
-
-import lombok.extern.slf4j.Slf4j;
-
 import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
 import com.homeaway.digitalplatform.streamregistry.Sources;
 import com.homeaway.streamplatform.streamregistry.db.dao.SourceDao;
 import com.homeaway.streamplatform.streamregistry.exceptions.SourceNotFoundException;
 import com.homeaway.streamplatform.streamregistry.model.Source;
-import com.homeaway.streamplatform.streamregistry.provider.InfraManager;
-import com.homeaway.streamplatform.streamregistry.streams.ManagedKStreams;
 import com.homeaway.streamplatform.streamregistry.streams.ManagedKafkaProducer;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
+
+import javax.validation.constraints.NotNull;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -40,15 +37,11 @@ public class SourceDaoImpl implements SourceDao {
     private ManagedKafkaProducer kafkaProducer;
 
     @NotNull
-    private final ManagedKStreams internalStore;
+    private final ReadOnlyKeyValueStore internalStore;
 
-    @NotNull
-    private final InfraManager infraManager;
-
-    public SourceDaoImpl(ManagedKafkaProducer kafkaProducer, ManagedKStreams internalStore, InfraManager infraManager) {
+    public SourceDaoImpl(ManagedKafkaProducer kafkaProducer, ReadOnlyKeyValueStore<AvroStreamKey, Sources> internalStore) {
         this.kafkaProducer = kafkaProducer;
         this.internalStore = internalStore;
-        this.infraManager = infraManager;
     }
 
     @SuppressWarnings("unchecked")
@@ -59,7 +52,7 @@ public class SourceDaoImpl implements SourceDao {
         AvroStreamKey avroStreamKey = getAvroKeyFromString(
                 givenSource.getStreamName());
 
-        Optional<Sources> avroSources = internalStore.getAvroStreamForKey(avroStreamKey);
+        Optional<Sources> avroSources = Optional.ofNullable((Sources) internalStore.get(avroStreamKey));
 
         Optional<com.homeaway.digitalplatform.streamregistry.Source> avroSourceOptional = avroSources
                 .get()
@@ -104,14 +97,15 @@ public class SourceDaoImpl implements SourceDao {
     @Override
     public Optional<Source> get(String streamName, String sourceName) {
 
-        AvroStreamKey avroKey = getAvroKeyFromString(sourceName);
+        AvroStreamKey avroKey = getAvroKeyFromString(streamName);
 
-        List<com.homeaway.digitalplatform.streamregistry.Source> avroSources
-                = (List<com.homeaway.digitalplatform.streamregistry.Source>) internalStore
-                .getAvroStreamForKey(avroKey).get();
+        Sources avroSources
+                = (Sources) internalStore
+                .get(avroKey);
 
         return Optional.of(getModelSourceFromAvroSource(
-                avroSources.stream()
+                avroSources.getSources()
+                        .stream()
                         .filter(stream -> stream.getSourceName().equalsIgnoreCase(sourceName))
                         .findAny().get()));
     }
@@ -120,7 +114,8 @@ public class SourceDaoImpl implements SourceDao {
     @Override
     public void delete(String streamName, String sourceName) {
         AvroStreamKey stream = getAvroKeyFromString(streamName);
-        Optional<com.homeaway.digitalplatform.streamregistry.Sources> avroSources = internalStore.getAvroStreamForKey(stream);
+        Optional<com.homeaway.digitalplatform.streamregistry.Sources> avroSources =
+                Optional.ofNullable((Sources) internalStore.get(stream));
 
         boolean sourceNameMatch = avroSources.get()
                 .getSources()
@@ -148,7 +143,8 @@ public class SourceDaoImpl implements SourceDao {
     public Optional<List<Source>> getAll(String streamName) {
 
         AvroStreamKey avroStreamKey = getAvroKeyFromString(streamName);
-        Optional<Sources> sources = internalStore.getAvroStreamForKey(avroStreamKey);
+        Optional<Sources> sources =
+                Optional.ofNullable((Sources) internalStore.get(avroStreamKey));
 
         return Optional.of(sources.get()
                 .getSources()

@@ -43,7 +43,9 @@ public class ManagedKStreams<T> implements Managed {
     @Getter
     private final String stateStoreName;
 
+    @Getter
     private ReadOnlyKeyValueStore<AvroStreamKey, T> view;
+
     private boolean isRunning = false;
 
     public ManagedKStreams(Properties streamProperties, String topicName, String stateStoreName,
@@ -52,7 +54,7 @@ public class ManagedKStreams<T> implements Managed {
         this.streamProperties = streamProperties;
         this.stateStoreName = stateStoreName;
 
-        KStreamBuilder kStreamBuilder= new KStreamBuilder();
+        KStreamBuilder kStreamBuilder = new KStreamBuilder();
 
         kStreamBuilder.globalTable(topicName, stateStoreName);
 
@@ -61,7 +63,7 @@ public class ManagedKStreams<T> implements Managed {
         streams.setStateListener((newState, oldState) -> {
             if (!isRunning && newState == KafkaStreams.State.RUNNING) {
                 isRunning = true;
-                if( testListener != null) {
+                if (testListener != null) {
                     testListener.stateStoreInitialized();
                 }
             }
@@ -73,7 +75,7 @@ public class ManagedKStreams<T> implements Managed {
     public void start() {
         streams.start();
         log.info("Stream Registry KStreams started.");
-        log.info("Stream Registry State Store Name: {}",stateStoreName);
+        log.info("Stream Registry State Store Name: {}", stateStoreName);
         view = streams.store(stateStoreName, QueryableStoreTypes.keyValueStore());
     }
 
@@ -83,11 +85,11 @@ public class ManagedKStreams<T> implements Managed {
         log.info("KStreams closed");
     }
 
-    public Optional<T> getAvroStreamForKey(AvroStreamKey key){
+    public Optional<T> getAvroStreamForKey(AvroStreamKey key) {
         return Optional.ofNullable(view.get(key));
     }
 
-    public KeyValueIterator<AvroStreamKey, T> getAllValues(){
+    public KeyValueIterator<AvroStreamKey, T> getAllValues() {
         return view.all();
     }
 }

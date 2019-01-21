@@ -107,7 +107,7 @@ public class SourceResource {
             Optional<Source> sourceResponse = sourceDao.get(streamName, sourceName);
             if (!sourceResponse.isPresent()) {
                 log.warn("Source Not Found: " + sourceName);
-                return ResourceUtils.notFound("Producer not found " + sourceName);
+                return ResourceUtils.notFound("Source not found " + sourceName);
             }
             return Response.ok().entity(sourceResponse.get()).build();
         } catch (Exception e) {
@@ -156,14 +156,14 @@ public class SourceResource {
         @ApiResponse(code = 404, message = "Stream not found") })
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
-    public Response getAllSources(
+    public Response getAllSourcesByStream(
         @ApiParam(value = "Stream Name corresponding to the source", required = true) @PathParam("streamName") String streamName) {
         try {
             Optional<List<Source>> sources = sourceDao.getAll(streamName);
             if (!sources.isPresent()) {
                 return ResourceUtils.streamNotFound(streamName);
             }
-            return Response.ok().entity(sources).build();
+            return Response.ok().entity(sources.get()).build();
         } catch (Exception e) {
             log.error("Error occurred while getting data from Stream Registry.", e);
             throw new InternalServerErrorException("Error occurred while getting data from Stream Registry");
