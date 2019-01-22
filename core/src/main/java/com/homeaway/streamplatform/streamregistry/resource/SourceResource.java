@@ -68,10 +68,10 @@ public class SourceResource {
                 return ResourceUtils.notFound(sourceName);
             }
 
-            Optional<Source> sourceOptional = sourceDao.upsert(source.get());
-            if (sourceOptional.isPresent()) {
-                log.info(" Source upserted, sourceName: " + sourceName);
-                return Response.ok().entity(source.get()).build();
+            List<Source> sources = sourceDao.upsert(source.get());
+            if (sources != null) {
+                log.info(" Source upserted, new sources list: " + sourceName);
+                return Response.ok().entity(sources).build();
             }
         } catch (IllegalArgumentException e) {
             log.error("Input is wrong.", e);
@@ -126,15 +126,15 @@ public class SourceResource {
         @ApiResponse(code = 500, message = "Error Occurred while getting data") })
     @Path("/{sourceName}")
     @Timed
-    public Response deleteProducer(@ApiParam(value = "name of the stream", required = true) @PathParam("streamName") String streamName,
-        @ApiParam(value = "name of the producer", required = true) @PathParam("sourceName") String sourceName) {
+    public Response deleteSource(@ApiParam(value = "name of the stream", required = true) @PathParam("streamName") String streamName,
+                                 @ApiParam(value = "name of the source", required = true) @PathParam("sourceName") String sourceName) {
         try {
             sourceDao.delete(streamName, sourceName);
         } catch (SourceNotFoundException pe) {
             log.warn("Source not found ", sourceName);
             return ResourceUtils.notFound("Source not found " + sourceName);
         } catch (Exception e) {
-            log.error("Error occurred while getting data from Stream Registry.", e);
+            log.error("Error occurred while deleting data from Stream Registry.", e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
         return Response

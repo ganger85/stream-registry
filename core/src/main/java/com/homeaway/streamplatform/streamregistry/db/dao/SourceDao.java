@@ -22,7 +22,7 @@ import com.homeaway.streamplatform.streamregistry.model.Source;
 
 public interface SourceDao {
 
-    Optional<Source> upsert(Source source);
+    List<Source> upsert(Source source);
 
     Optional<Source> get(String streamName, String sourceName);
 
