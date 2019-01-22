@@ -68,11 +68,13 @@ public class SourceResource {
                 return ResourceUtils.notFound(sourceName);
             }
 
-            List<Source> sources = sourceDao.upsert(source.get());
-            if (sources != null) {
-                log.info(" Source upserted, new sources list: " + sourceName);
-                return Response.ok().entity(sources).build();
+            try {
+                sourceDao.upsert(source.get());
+            } catch (Exception e) {
+                log.error("Error occurred while deleting data from Stream Registry.", e);
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
             }
+
         } catch (IllegalArgumentException e) {
             log.error("Input is wrong.", e);
             throw new BadRequestException("Input Validation failed. Message=" + e.getMessage(), e);
@@ -80,7 +82,11 @@ public class SourceResource {
             log.error("Error occurred while getting data from Stream Registry.", e);
             throw new InternalServerErrorException("Error occurred while updating the Producer in Stream Registry", e);
         }
-        return null;
+        return Response
+                .ok()
+                .type("text/plain")
+                .entity("Source updated " + sourceName)
+                .build();
     }
 
     @GET
