@@ -16,12 +16,11 @@
 package com.homeaway.streamplatform.streamregistry.resource;
 
 
-import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
-import com.homeaway.digitalplatform.streamregistry.Sources;
-import com.homeaway.streamplatform.streamregistry.db.dao.SourceDao;
-import com.homeaway.streamplatform.streamregistry.db.dao.impl.SourceDaoImpl;
-import com.homeaway.streamplatform.streamregistry.model.Source;
-import com.homeaway.streamplatform.streamregistry.streams.ManagedKafkaProducer;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import lombok.Getter;
+
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -29,13 +28,14 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.powermock.api.mockito.PowerMockito.whenNew;
+import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
+import com.homeaway.digitalplatform.streamregistry.Sources;
+import com.homeaway.streamplatform.streamregistry.db.dao.SourceDao;
+import com.homeaway.streamplatform.streamregistry.db.dao.impl.SourceDaoImpl;
+import com.homeaway.streamplatform.streamregistry.model.Source;
+import com.homeaway.streamplatform.streamregistry.streams.StreamProducer;
 
 // Unit tests
 @RunWith(PowerMockRunner.class)
@@ -95,22 +95,18 @@ public class SourceResourceTest {
 
 
         keyValueStore = Collections.unmodifiableMap(keyValueStoreMap);
+
     }
 
-    @Mock
-    private ManagedKafkaProducer kafkaProducer;
-
-
     @Test
-    public void testGetSourcesByStreamName() throws Exception {
+    public void testGetSourcesByStreamName() {
 
+
+        StreamProducer kafkaProducer = new StreamProducerImpl<>(keyValueStore);
         ReadOnlyKeyValueStoreStub localKeyValueStore = new ReadOnlyKeyValueStoreStub(keyValueStore);
-        whenNew(ManagedKafkaProducer.class).withAnyArguments().thenReturn(kafkaProducer);
-
         SourceDao sourceDao = new SourceDaoImpl(kafkaProducer, localKeyValueStore);
-        SourceResource resource = new SourceResource(sourceDao);
 
-        List<Source> sources = (List<Source>) resource.getAllSourcesByStream("streamA").getEntity();
+        List<Source> sources = sourceDao.getAll("streamA").get();
 
         Source sourceA = sources.stream()
                 .filter(source -> source.getSourceName().equalsIgnoreCase("sourceA"))
@@ -125,35 +121,80 @@ public class SourceResourceTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testGetSourceByStreamNameAndSourceName() throws Exception {
-
+    public void testGetSourceByStreamNameAndSourceName() {
+        StreamProducer kafkaProducer = new StreamProducerImpl<>(keyValueStore);
         ReadOnlyKeyValueStoreStub localKeyValueStore = new ReadOnlyKeyValueStoreStub(keyValueStore);
-        whenNew(ManagedKafkaProducer.class).withAnyArguments().thenReturn(kafkaProducer);
-
         SourceDao sourceDao = new SourceDaoImpl(kafkaProducer, localKeyValueStore);
-        SourceResource resource = new SourceResource(sourceDao);
-
-        Source sourceB = (Source) resource.getSource("streamB", "sourceB").getEntity();
+        Source sourceB = sourceDao.get("streamB", "sourceB").get();
 
         Assert.assertEquals("sourceB", sourceB.getSourceName());
         Assert.assertEquals("mysql", sourceB.getSourceType());
         Assert.assertEquals(configMap.get("foo"), sourceB.getStreamSourceConfiguration().get("foo"));
     }
 
-//    @Test
-//    public void upsertSource() throws Exception {
-//        ReadOnlyKeyValueStoreStub localKeyValueStore = new ReadOnlyKeyValueStoreStub(keyValueStore);
-//        whenNew(ManagedKafkaProducer.class).withAnyArguments().thenReturn(kafkaProducer);
-//
-//        SourceDao sourceDao = new SourceDaoImpl(kafkaProducer, localKeyValueStore);
-//        SourceResource resource = new SourceResource(sourceDao);
-//
-//        Source sourceD = (Source) resource.upsertSource("streamC", "sourceD").getEntity();
-//
-//    }
+
+    @Test
+    public void testDeleteSourceByStreamName() {
+
+        Map<AvroStreamKey, Sources> localMap = new HashMap<>();
+        localMap.putAll(keyValueStore);
+
+        StreamProducer kafkaProducer = new StreamProducerImpl<>(localMap);
 
 
-    class ReadOnlyKeyValueStoreStub<AvroStreamKey, Sources> implements ReadOnlyKeyValueStore<AvroStreamKey, Sources> {
+        ReadOnlyKeyValueStoreStub localKeyValueStore = new ReadOnlyKeyValueStoreStub(localMap);
+        SourceDao sourceDao = new SourceDaoImpl(kafkaProducer, localKeyValueStore);
+
+        sourceDao.delete("streamA", "sourceA");
+
+        List<Source> sources = sourceDao.getAll("streamA").get();
+
+        Assert.assertEquals(0, sources.size());
+    }
+
+    @Test
+    public void testUpsertSourceForExistingStream() {
+
+        Map<AvroStreamKey, Sources> localMap = new HashMap<>();
+        localMap.putAll(keyValueStore);
+
+        StreamProducer kafkaProducer = new StreamProducerImpl<>(localMap);
+
+
+        ReadOnlyKeyValueStoreStub localKeyValueStore = new ReadOnlyKeyValueStoreStub(localMap);
+        SourceDao sourceDao = new SourceDaoImpl(kafkaProducer, localKeyValueStore);
+
+        Source source = Source.builder()
+                                .streamName("streamA")
+                                .sourceName("sourceB")
+                                .sourceType("mysql")
+                                .streamSourceConfiguration(configMap)
+                                .build();
+
+        List<Source> sources = sourceDao.upsert(source);
+
+        Assert.assertEquals(2, sources.size());
+    }
+
+    private class StreamProducerImpl<K, V> implements StreamProducer<K, V> {
+
+        @Getter
+        private final Map<K, V> map;
+
+
+        public StreamProducerImpl(Map<K, V> map) {
+            this.map = map;
+        }
+
+
+        @Override
+        public void log(K key, V value) {
+            map.put(key, value);
+        }
+    }
+
+
+    private class ReadOnlyKeyValueStoreStub<AvroStreamKey, Sources> implements ReadOnlyKeyValueStore<AvroStreamKey, Sources> {
 
         private Map<AvroStreamKey, Sources> sources;
 
@@ -193,7 +234,7 @@ public class SourceResourceTest {
         }
     }
 
-    class KeyValueIteratorStub<AvroStreamKey, Sources> implements KeyValueIterator {
+    class KeyValueIteratorStub<K, V> implements KeyValueIterator {
 
         private Iterator<KeyValue> keyValues;
 
@@ -222,6 +263,5 @@ public class SourceResourceTest {
             return keyValues.next();
         }
     }
-
 
 }
