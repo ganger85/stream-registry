@@ -28,6 +28,6 @@ public interface SourceDao {
 
     void delete(String streamName, String sourceName);
 
-    Optional<List<Source>> getAll(String streamName);
+    List<Source> getAll(String streamName);
 
 }

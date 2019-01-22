@@ -44,13 +44,13 @@ public interface StreamSourceManager {
      * @param sourceName   the name of the source to create.
      * @param type         the type of the source to create. Must be one of the supported types.
      * @param clusterName  the name of the cluster that the stream should be created on.
-     * @param configMapMap the map of configmaps.
+     * @param configMap the map of configmaps.
      * @return the created stream source
      * @throws StreamSourceException This is thrown when         the operation could not complete.
      */
     StreamSource createStreamSource(String sourceName, String type,
                                     String clusterName,
-                                    Map<String, String> configMapMap)
+                                    Map<String, String> configMap)
             throws StreamSourceException;
 
     /**
@@ -68,12 +68,12 @@ public interface StreamSourceManager {
      * with the supplied config maps.
      *
      * @param sourceName   the name of the stream source to update.
-     * @param configMapMap the map of config maps -- applicable overrides apply.
+     * @param configMap the map of config maps -- applicable overrides apply.
      * @return the updated stream source
      * @throws StreamSourceException This is thrown when         the operation could not complete.
      */
     StreamSource updateStreamSource(String sourceName,
-                                    Map<String, Map> configMapMap)
+                                    Map<String, Map> configMap)
             throws StreamSourceException;
 
     /**
@@ -105,7 +105,7 @@ public interface StreamSourceManager {
     StreamSource restartStreamSource(String sourceName) throws StreamSourceException;
 
     /**
-     * Pause stream source stream source.
+     * Pause stream source.
      *
      * @param sourceName the source name
      * @return the stream source
@@ -114,7 +114,7 @@ public interface StreamSourceManager {
     StreamSource pauseStreamSource(String sourceName) throws StreamSourceException;
 
     /**
-     * Resume stream source stream source.
+     * Resume stream source.
      *
      * @param sourceName the source name
      * @return the stream source

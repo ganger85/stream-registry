@@ -48,19 +48,19 @@ public class SourceResource {
 
     @PUT
     @ApiOperation(
-        value = "Register source",
-        notes = "Register a source with a stream",
-        tags = "sources",
-        response = Source.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Returns Source information", response = Source.class),
-        @ApiResponse(code = 404, message = "Stream not found"),
-        @ApiResponse(code = 412, message = "Unsupported region"),
-        @ApiResponse(code = 500, message = "Error Occurred while getting data") })
+            value = "Register source",
+            notes = "Register a source with a stream",
+            tags = "sources",
+            response = Source.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Returns Source information", response = Source.class),
+            @ApiResponse(code = 404, message = "Stream not found"),
+            @ApiResponse(code = 412, message = "Unsupported region"),
+            @ApiResponse(code = 500, message = "Error Occurred while getting data")})
     @Path("/{sourceName}")
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
     public Response upsertSource(@ApiParam(value = "name of the stream", required = true) @PathParam("streamName") String streamName,
-        @ApiParam(value = "name of the source", required = true) @PathParam("sourceName") String sourceName) {
+                                 @ApiParam(value = "name of the source", required = true) @PathParam("sourceName") String sourceName) {
         try {
             Optional<Source> source = sourceDao.get(streamName, sourceName);
 
@@ -92,17 +92,17 @@ public class SourceResource {
     @GET
     @Path("/{sourceName}")
     @ApiOperation(
-        value = "Get source",
-        notes = "Get a source associated with the stream",
-        tags = "sources",
-        response = Source.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Returns Source information", response = Source.class),
-        @ApiResponse(code = 404, message = "Stream or Source not found"),
-        @ApiResponse(code = 500, message = "Error Occurred while getting data") })
+            value = "Get source",
+            notes = "Get a source associated with the stream",
+            tags = "sources",
+            response = Source.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Returns Source information", response = Source.class),
+            @ApiResponse(code = 404, message = "Stream or Source not found"),
+            @ApiResponse(code = 500, message = "Error Occurred while getting data")})
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
     public Response getSource(@ApiParam(value = "name of the stream", required = true) @PathParam("streamName") String streamName,
-        @ApiParam(value = "name of the source", required = true) @PathParam("sourceName") String sourceName) {
+                              @ApiParam(value = "name of the source", required = true) @PathParam("sourceName") String sourceName) {
 
         Optional<Source> source = sourceDao.get(streamName, sourceName);
 
@@ -124,12 +124,12 @@ public class SourceResource {
 
     @DELETE
     @ApiOperation(
-        value = "De-register source",
-        notes = "De-Registers a source from a stream",
-        tags = "sources")
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Source successfully deleted"),
-        @ApiResponse(code = 404, message = "Stream or source not found"),
-        @ApiResponse(code = 500, message = "Error Occurred while getting data") })
+            value = "De-register source",
+            notes = "De-Registers a source from a stream",
+            tags = "sources")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Source successfully deleted"),
+            @ApiResponse(code = 404, message = "Stream or source not found"),
+            @ApiResponse(code = 500, message = "Error Occurred while getting data")})
     @Path("/{sourceName}")
     @Timed
     public Response deleteSource(@ApiParam(value = "name of the stream", required = true) @PathParam("streamName") String streamName,
@@ -144,32 +144,29 @@ public class SourceResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
         return Response
-            .ok()
-            .type("text/plain")
-            .entity("Source deleted " + sourceName)
-            .build();
+                .ok()
+                .type("text/plain")
+                .entity("Source deleted " + sourceName)
+                .build();
     }
 
     @GET
     @Path("/")
     @ApiOperation(
-        value = "Get all sources for a given Stream",
-        notes = "Gets a list of sources for a given stream",
-        tags = "sources",
-        response = Source.class)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Returns Source information", response = Source.class),
-        @ApiResponse(code = 500, message = "Error Occurred while getting data"),
-        @ApiResponse(code = 404, message = "Stream not found") })
+            value = "Get all sources for a given Stream",
+            notes = "Gets a list of sources for a given stream",
+            tags = "sources",
+            response = Source.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Returns Source information", response = Source.class),
+            @ApiResponse(code = 500, message = "Error Occurred while getting data"),
+            @ApiResponse(code = 404, message = "Stream not found")})
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
     public Response getAllSourcesByStream(
-        @ApiParam(value = "Stream Name corresponding to the source", required = true) @PathParam("streamName") String streamName) {
+            @ApiParam(value = "Stream Name corresponding to the source", required = true) @PathParam("streamName") String streamName) {
         try {
-            Optional<List<Source>> sources = sourceDao.getAll(streamName);
-            if (!sources.isPresent()) {
-                return ResourceUtils.streamNotFound(streamName);
-            }
-            return Response.ok().entity(sources.get()).build();
+            List<Source> sources = sourceDao.getAll(streamName);
+            return Response.ok().entity(sources).build();
         } catch (Exception e) {
             log.error("Error occurred while getting data from Stream Registry.", e);
             throw new InternalServerErrorException("Error occurred while getting data from Stream Registry");

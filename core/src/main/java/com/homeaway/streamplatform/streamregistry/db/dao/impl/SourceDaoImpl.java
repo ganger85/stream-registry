@@ -180,17 +180,17 @@ public class SourceDaoImpl implements SourceDao {
     }
 
     @Override
-    public Optional<List<Source>> getAll(String streamName) {
+    public List<Source> getAll(String streamName) {
 
         AvroStreamKey avroStreamKey = getAvroKeyFromString(streamName);
         Optional<Sources> sources =
                 Optional.ofNullable((Sources) internalStore.get(avroStreamKey));
 
-        return Optional.of(sources.get()
+        return sources.get()
                 .getSources()
                 .stream()
                 .map(avroStream -> getModelSourceFromAvroSource(avroStream))
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList());
 
     }
 
