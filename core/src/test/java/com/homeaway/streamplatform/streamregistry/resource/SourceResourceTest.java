@@ -176,6 +176,31 @@ public class SourceResourceTest {
         Assert.assertEquals(2, sources.size());
     }
 
+    @Test
+    public void testUpsertForNewStream() {
+
+        Map<AvroStreamKey, Sources> localMap = new HashMap<>();
+        localMap.putAll(keyValueStore);
+
+        StreamProducer kafkaProducer = new StreamProducerImpl<>(localMap);
+
+
+        ReadOnlyKeyValueStoreStub localKeyValueStore = new ReadOnlyKeyValueStoreStub(localMap);
+        SourceDao sourceDao = new SourceDaoImpl(kafkaProducer, localKeyValueStore);
+
+        Source source = Source.builder()
+                .streamName("streamA")
+                .sourceName("sourceB")
+                .sourceType("mysql")
+                .streamSourceConfiguration(configMap)
+                .build();
+
+        List<Source> sources = sourceDao.upsert(source);
+
+        Assert.assertEquals(2, sources.size());
+    }
+
+
     private class StreamProducerImpl<K, V> implements StreamProducer<K, V> {
 
         @Getter
