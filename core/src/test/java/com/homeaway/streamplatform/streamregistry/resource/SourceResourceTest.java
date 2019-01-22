@@ -189,15 +189,15 @@ public class SourceResourceTest {
         SourceDao sourceDao = new SourceDaoImpl(kafkaProducer, localKeyValueStore);
 
         Source source = Source.builder()
-                .streamName("streamA")
-                .sourceName("sourceB")
-                .sourceType("mysql")
+                .streamName("streamD")
+                .sourceName("sourceA")
+                .sourceType("kinesis")
                 .streamSourceConfiguration(configMap)
                 .build();
 
         List<Source> sources = sourceDao.upsert(source);
 
-        Assert.assertEquals(2, sources.size());
+        Assert.assertEquals(1, sources.size());
     }
 
 
