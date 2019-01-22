@@ -50,7 +50,7 @@ public class SourceDaoImpl implements SourceDao {
 
     @SuppressWarnings("unchecked")
     @Override
-    public List<Source> upsert(Source givenSource) {
+    public void upsert(Source givenSource) {
 
 
         AvroStreamKey avroStreamKey = getAvroKeyFromString(
@@ -58,50 +58,79 @@ public class SourceDaoImpl implements SourceDao {
 
         Optional<Sources> avroSources = Optional.ofNullable((Sources) internalStore.get(avroStreamKey));
 
-        Optional<com.homeaway.digitalplatform.streamregistry.Source> avroSourceOptional = avroSources
-                .get()
-                .getSources()
-                .stream()
-                .filter((sourceAvro) -> sourceAvro.getSourceName()
-                        .equalsIgnoreCase(givenSource.getSourceName()))
-                .findAny();
+        if (avroSources.isPresent()) {
+            // stream exists, sources exist
 
-        if (avroSourceOptional.isPresent()) {
-            // update source
-            com.homeaway.digitalplatform.streamregistry.Source updatedAvroSource = avroSourceOptional.get();
-            updatedAvroSource.setSourceName(givenSource.getStreamName());
-            updatedAvroSource.setSourceName(givenSource.getSourceName());
-            updatedAvroSource.setSourceType(givenSource.getSourceType());
-            updatedAvroSource.setStreamSourceConfiguration(givenSource.getStreamSourceConfiguration());
-
-            List<com.homeaway.digitalplatform.streamregistry.Source> avroSourcesWithoutTargetItem = avroSources
+            Optional<com.homeaway.digitalplatform.streamregistry.Source> avroSourceOptional = avroSources
                     .get()
                     .getSources()
                     .stream()
-                    .filter((sourceAvro) -> !sourceAvro.getSourceName()
-                            .equalsIgnoreCase(givenSource.getSourceName())).
-                            collect(Collectors.toList());
-            avroSourcesWithoutTargetItem.add(updatedAvroSource);
-            kafkaProducer.log(avroStreamKey, avroSourcesWithoutTargetItem);
+                    .filter((sourceAvro) -> sourceAvro.getSourceName()
+                            .equalsIgnoreCase(givenSource.getSourceName()))
+                    .findAny();
+
+            if (avroSourceOptional.isPresent()) {
+                // update source in source list for an existing stream
+                com.homeaway.digitalplatform.streamregistry.Source updatedAvroSource = getUpdatedAvroSource(givenSource);
+
+                List<com.homeaway.digitalplatform.streamregistry.Source> avroSourcesWithoutTargetItem = avroSources
+                        .get()
+                        .getSources()
+                        .stream()
+                        .filter((sourceAvro) -> !sourceAvro.getSourceName()
+                                .equalsIgnoreCase(givenSource.getSourceName())).
+                                collect(Collectors.toList());
+                avroSourcesWithoutTargetItem.add(updatedAvroSource);
+                kafkaProducer.log(avroStreamKey, avroSourcesWithoutTargetItem);
+            } else {
+                // add to sources list for an existing stream
+                com.homeaway.digitalplatform.streamregistry.Source updatedAvroSource = getUpdatedAvroSource(givenSource);
+
+                List<com.homeaway.digitalplatform.streamregistry.Source> avroSourcesList = new ArrayList<> ();
+                avroSourcesList.addAll(avroSources
+                        .get()
+                        .getSources());
+
+                avroSourcesList.add(updatedAvroSource);
+
+                Sources updateAvroSources = com.homeaway.digitalplatform.streamregistry.Sources
+                        .newBuilder()
+                        .setStreamName(updatedAvroSource.getStreamName())
+                        .setSources(avroSourcesList)
+                        .build();
+
+                kafkaProducer.log(avroStreamKey, updateAvroSources);
+            }
         } else {
-            // create a new source
-            com.homeaway.digitalplatform.streamregistry.Source newSourceAvro = com.homeaway.digitalplatform.streamregistry.Source.newBuilder()
+            // create a new source for new stream
+
+            List<com.homeaway.digitalplatform.streamregistry.Source> tempList = new ArrayList<>();
+            com.homeaway.digitalplatform.streamregistry.Source newAvroSource =
+                    com.homeaway.digitalplatform.streamregistry.Source.newBuilder()
                     .setStreamName(givenSource.getStreamName())
                     .setSourceName(givenSource.getSourceName())
                     .setSourceType(givenSource.getSourceType())
                     .setStreamSourceConfiguration(givenSource.getStreamSourceConfiguration())
                     .build();
 
-            List<com.homeaway.digitalplatform.streamregistry.Source> tempList = new ArrayList<>();
-            tempList.addAll(avroSources.get().getSources());
-            tempList.add(newSourceAvro);
-
-            avroSources.get().setSources(tempList);
-            kafkaProducer.log(avroStreamKey, avroSources);
-            return getModelSourcesFromAvroSources(avroSources.get());
+            tempList.add(newAvroSource);
+            Sources sources = Sources.newBuilder()
+                    .setStreamName(newAvroSource.getStreamName())
+                    .setSources(tempList)
+                    .build();
+            kafkaProducer.log(avroStreamKey, sources);
         }
 
-       return null;
+
+    }
+
+    private com.homeaway.digitalplatform.streamregistry.Source getUpdatedAvroSource(Source givenSource) {
+        return com.homeaway.digitalplatform.streamregistry.Source.newBuilder()
+                .setStreamName(givenSource.getStreamName())
+                .setSourceName(givenSource.getSourceName())
+                .setSourceType(givenSource.getSourceType())
+                .setStreamSourceConfiguration(givenSource.getStreamSourceConfiguration())
+                .build();
     }
 
     @SuppressWarnings("unchecked")
@@ -176,15 +205,15 @@ public class SourceDaoImpl implements SourceDao {
     }
 
     private static List<Source>
-        getModelSourcesFromAvroSources(com.homeaway.digitalplatform.streamregistry.Sources avroSources) {
+    getModelSourcesFromAvroSources(com.homeaway.digitalplatform.streamregistry.Sources avroSources) {
         return avroSources.getSources()
                 .stream()
-                .map(avroSource ->  Source.builder()
-                .streamName(avroSource.getStreamName())
-                                .sourceName(avroSource.getSourceName())
-                                .sourceType(avroSource.getSourceType())
-                                .streamSourceConfiguration(avroSource.getStreamSourceConfiguration())
-                                .build())
+                .map(avroSource -> Source.builder()
+                        .streamName(avroSource.getStreamName())
+                        .sourceName(avroSource.getSourceName())
+                        .sourceType(avroSource.getSourceType())
+                        .streamSourceConfiguration(avroSource.getStreamSourceConfiguration())
+                        .build())
                 .collect(Collectors.toList());
 
     }

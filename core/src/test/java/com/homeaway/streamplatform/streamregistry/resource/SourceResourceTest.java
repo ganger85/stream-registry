@@ -16,11 +16,13 @@
 package com.homeaway.streamplatform.streamregistry.resource;
 
 
-import java.util.*;
-import java.util.stream.Collectors;
-
+import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
+import com.homeaway.digitalplatform.streamregistry.Sources;
+import com.homeaway.streamplatform.streamregistry.db.dao.SourceDao;
+import com.homeaway.streamplatform.streamregistry.db.dao.impl.SourceDaoImpl;
+import com.homeaway.streamplatform.streamregistry.model.Source;
+import com.homeaway.streamplatform.streamregistry.streams.StreamProducer;
 import lombok.Getter;
-
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -30,12 +32,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
-import com.homeaway.digitalplatform.streamregistry.Sources;
-import com.homeaway.streamplatform.streamregistry.db.dao.SourceDao;
-import com.homeaway.streamplatform.streamregistry.db.dao.impl.SourceDaoImpl;
-import com.homeaway.streamplatform.streamregistry.model.Source;
-import com.homeaway.streamplatform.streamregistry.streams.StreamProducer;
+import java.util.*;
+import java.util.stream.Collectors;
 
 // Unit tests
 @RunWith(PowerMockRunner.class)
@@ -101,9 +99,9 @@ public class SourceResourceTest {
     @Test
     public void testGetSourcesByStreamName() {
 
+        ReadOnlyKeyValueStoreStub localKeyValueStore = new ReadOnlyKeyValueStoreStub(keyValueStore);
 
         StreamProducer kafkaProducer = new StreamProducerImpl<>(keyValueStore);
-        ReadOnlyKeyValueStoreStub localKeyValueStore = new ReadOnlyKeyValueStoreStub(keyValueStore);
         SourceDao sourceDao = new SourceDaoImpl(kafkaProducer, localKeyValueStore);
 
         List<Source> sources = sourceDao.getAll("streamA").get();
@@ -171,9 +169,14 @@ public class SourceResourceTest {
                                 .streamSourceConfiguration(configMap)
                                 .build();
 
-        List<Source> sources = sourceDao.upsert(source);
+        sourceDao.upsert(source);
 
-        Assert.assertEquals(2, sources.size());
+        Assert.assertEquals(2, (localMap.get(
+                AvroStreamKey.newBuilder()
+                        .setStreamName("streamA")
+                        .build()))
+                .getSources()
+                .size());
     }
 
     @Test
@@ -195,9 +198,15 @@ public class SourceResourceTest {
                 .streamSourceConfiguration(configMap)
                 .build();
 
-        List<Source> sources = sourceDao.upsert(source);
+       sourceDao.upsert(source);
 
-        Assert.assertEquals(1, sources.size());
+       AvroStreamKey streamD = AvroStreamKey
+               .newBuilder()
+               .setStreamName("streamD")
+               .build();
+
+        Assert.assertNotNull(localKeyValueStore.get(streamD));
+        Assert.assertEquals(4, localKeyValueStore.streams.size());
     }
 
 
@@ -221,19 +230,20 @@ public class SourceResourceTest {
 
     private class ReadOnlyKeyValueStoreStub<AvroStreamKey, Sources> implements ReadOnlyKeyValueStore<AvroStreamKey, Sources> {
 
-        private Map<AvroStreamKey, Sources> sources;
+        @Getter
+        private Map<AvroStreamKey, Sources> streams;
 
-        public ReadOnlyKeyValueStoreStub(Map<AvroStreamKey, Sources> sources) {
-            this.sources = sources;
+        public ReadOnlyKeyValueStoreStub(Map<AvroStreamKey, Sources> streams) {
+            this.streams = streams;
         }
 
         @Override
         public Sources get(AvroStreamKey key) {
-            return sources.get(key);
+            return streams.get(key);
         }
 
         public void put(AvroStreamKey key, Sources values) {
-            sources.put(key, values);
+            streams.put(key, values);
         }
 
         @Override
@@ -244,9 +254,9 @@ public class SourceResourceTest {
 
         @Override
         public KeyValueIterator<AvroStreamKey, Sources> all() {
-            List<KeyValue> keyValues = sources.entrySet()
+            List<KeyValue> keyValues = streams.entrySet()
                     .stream()
-                    .map(e -> new KeyValue<AvroStreamKey, Sources>(e.getKey(), e.getValue()))
+                    .map(e -> new KeyValue<>(e.getKey(), e.getValue()))
                     .collect(Collectors.toList());
 
             return new KeyValueIteratorStub<AvroStreamKey, Sources>(keyValues.iterator());
