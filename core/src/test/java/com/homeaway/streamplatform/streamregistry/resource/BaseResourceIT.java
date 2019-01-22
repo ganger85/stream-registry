@@ -177,7 +177,7 @@ public class BaseResourceIT {
         schemaRegistryURL = getTestUrl("/homeaway/test/schema-registry-key");
 
         loadConfig("config-dev.yaml");
-        TopicsConfig topicsConfig = configuration.getTopicsConfig();
+        topicsConfig = configuration.getTopicsConfig();
         String producerTopic = topicsConfig.getProducerTopic();
         String streamSourceTopic = topicsConfig.getStreamSourceTopic();
 
@@ -187,10 +187,6 @@ public class BaseResourceIT {
         } catch (Exception exception) {
             throw new IllegalStateException("Could not create topic " + producerTopic, exception);
         }
-
-        BaseResourceIT.topicsConfig = new TopicsConfig();
-        BaseResourceIT.topicsConfig.setProducerTopic(producerTopic);
-        BaseResourceIT.topicsConfig.setProducerStateStore(topicsConfig.getProducerStateStore());
 
         infraManager = buildInfraManager();
 

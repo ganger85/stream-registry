@@ -24,6 +24,6 @@ import java.util.List;
  */
 public class SourceType {
 
-    public static final List<String> sourceTypes = Arrays.asList("kinesis");
+    public static final List<String> sourceTypes = Arrays.asList("kinesis", "kafka");
 
 }

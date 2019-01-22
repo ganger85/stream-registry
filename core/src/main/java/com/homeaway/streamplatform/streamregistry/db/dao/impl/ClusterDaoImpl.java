@@ -48,13 +48,13 @@ public class ClusterDaoImpl implements ClusterDao {
     @Override
     public Multimap<String, Cluster> getClusters() {
 
-        Map<ClusterKey, ClusterValue>  clusterByName = infraManager.getAllClusters()
+        Map<ClusterKey, ClusterValue>  cluster = infraManager.getAllClusters()
                 .entrySet()
                 .stream()
                 .filter((e -> e.getKey().getEnv().equalsIgnoreCase(env)))
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
 
-        Iterator it = clusterByName.entrySet().iterator();
+        Iterator it = cluster.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<ClusterKey, ClusterValue> pair = (Map.Entry)it.next();
             clustersByName.put(pair.getKey().getHint(), getCluster(pair.getKey(), pair.getValue()));
@@ -67,7 +67,7 @@ public class ClusterDaoImpl implements ClusterDao {
 
     @Override
     public Collection<Cluster> getCluster(String clusterName) {
-        return null;
+        throw new UnsupportedOperationException("This isn't implemented yet.");
     }
 
 

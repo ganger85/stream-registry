@@ -17,7 +17,7 @@ package com.homeaway.streamplatform.streamregistry.exceptions;
 
 public class SourceTypeNotFoundException extends BaseStreamException {
 
-    public SourceTypeNotFoundException(String sourceName) {
-        super(sourceName);
+    public SourceTypeNotFoundException(String sourceType) {
+        super(sourceType);
     }
 }
