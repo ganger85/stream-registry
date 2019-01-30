@@ -67,8 +67,8 @@ import com.homeaway.streamplatform.streamregistry.extensions.validator.StreamVal
 import com.homeaway.streamplatform.streamregistry.model.Consumer;
 import com.homeaway.streamplatform.streamregistry.model.Producer;
 import com.homeaway.streamplatform.streamregistry.provider.InfraManager;
-import com.homeaway.streamplatform.streamregistry.streams.ManagedKStreams;
-import com.homeaway.streamplatform.streamregistry.streams.ManagedKafkaProducer;
+import com.homeaway.streamplatform.streamregistry.streams.GlobalKStreams;
+import com.homeaway.streamplatform.streamregistry.streams.StreamRegistryProducer;
 
 @SuppressWarnings("WeakerAccess")
 @Slf4j
@@ -110,13 +110,13 @@ public class BaseResourceIT {
     // THIS IS A TEMPORARY WORKAROUND for now... centralizing here so that we can soon remove it
     protected static final int TEST_SLEEP_WAIT_MS = 80;
 
-    protected static ManagedKafkaProducer streamProducer;
+    protected static StreamRegistryProducer streamProducer;
 
-    protected static ManagedKafkaProducer sourceProducer;
+    protected static StreamRegistryProducer sourceProducer;
 
-    protected static ManagedKStreams streamProcessor;
+    protected static GlobalKStreams streamProcessor;
 
-    protected static ManagedKStreams sourceProcessor;
+    protected static GlobalKStreams sourceProcessor;
 
     protected static StreamResource streamResource;
 
@@ -196,10 +196,8 @@ public class BaseResourceIT {
         producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         producerConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryURL);
-        streamProducer = new ManagedKafkaProducer(producerConfig, BaseResourceIT.topicsConfig.getProducerTopic());
-        sourceProducer = new ManagedKafkaProducer(producerConfig, BaseResourceIT.topicsConfig.getStreamSourceTopic());
-
-        streamProducer.start();
+        streamProducer = new StreamRegistryProducer(producerConfig, BaseResourceIT.topicsConfig.getProducerTopic());
+        sourceProducer = new StreamRegistryProducer(producerConfig, BaseResourceIT.topicsConfig.getStreamSourceTopic());
 
         streamsConfig = new Properties();
         KafkaStreamsConfig kafkaStreamsConfig = configuration.getKafkaStreamsConfig();
@@ -210,13 +208,20 @@ public class BaseResourceIT {
         streamsConfig.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, kafkaStreamsConfig.getKstreamsProperties().get(VALUE_SERDE));
         streamsConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryURL);
         CompletableFuture<Boolean> initialized = new CompletableFuture<>();
-        streamProcessor = new ManagedKStreams(streamsConfig, BaseResourceIT.topicsConfig.getProducerTopic(),
+
+        Properties streamProperties = new Properties();
+        streamProperties.putAll(streamsConfig);
+        streamProperties.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/streams/kafka-streams");
+
+        streamProcessor = new GlobalKStreams<>(streamProperties, BaseResourceIT.topicsConfig.getProducerTopic(),
                 topicsConfig.getProducerStateStore(), () -> initialized.complete(true));
 
-        sourceProcessor = new ManagedKStreams(streamsConfig, BaseResourceIT.topicsConfig.getStreamSourceTopic(),
-                topicsConfig.getStreamSourceStateStore(), () -> initialized.complete(true));
 
-        streamProcessor.start();
+        Properties sourceProperties = new Properties();
+        sourceProperties.putAll(streamsConfig);
+        sourceProperties.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/sources/kafka-streams");
+        sourceProcessor = new GlobalKStreams<>(sourceProperties, BaseResourceIT.topicsConfig.getStreamSourceTopic(),
+                topicsConfig.getStreamSourceStateStore(), () -> initialized.complete(true));
 
         consumerConfig = new Properties();
         consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -343,7 +348,9 @@ public class BaseResourceIT {
     @AfterClass
     public static void tearDown() throws Exception {
         streamProcessor.stop();
+        sourceProcessor.stop();
         streamProducer.stop();
+        sourceProducer.stop();
         infraManager.stop();
         ZKCLIENT.close();
     }

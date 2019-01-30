@@ -15,12 +15,7 @@
  */
 package com.homeaway.streamplatform.streamregistry.db.dao.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 
 import javax.ws.rs.InternalServerErrorException;
 
@@ -50,7 +45,7 @@ import com.homeaway.streamplatform.streamregistry.extensions.validation.StreamVa
 import com.homeaway.streamplatform.streamregistry.model.Stream;
 import com.homeaway.streamplatform.streamregistry.model.Tags;
 import com.homeaway.streamplatform.streamregistry.provider.InfraManager;
-import com.homeaway.streamplatform.streamregistry.streams.ManagedKStreams;
+import com.homeaway.streamplatform.streamregistry.streams.GlobalKStreams;
 import com.homeaway.streamplatform.streamregistry.streams.StreamProducer;
 
 @Slf4j
@@ -60,7 +55,7 @@ public class StreamDaoImpl extends AbstractDao implements StreamDao, StreamValid
     private SchemaManager schemaManager;
 
     public StreamDaoImpl(StreamProducer streamProducer,
-                         ManagedKStreams kStreams,
+                         GlobalKStreams kStreams,
                          String env,
                          RegionDao regionDao,
                          InfraManager infraManager,

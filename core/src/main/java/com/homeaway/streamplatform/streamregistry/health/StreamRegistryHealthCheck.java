@@ -48,7 +48,7 @@ import com.homeaway.streamplatform.streamregistry.model.Tags;
 import com.homeaway.streamplatform.streamregistry.resource.ConsumerResource;
 import com.homeaway.streamplatform.streamregistry.resource.ProducerResource;
 import com.homeaway.streamplatform.streamregistry.resource.StreamResource;
-import com.homeaway.streamplatform.streamregistry.streams.ManagedKStreams;
+import com.homeaway.streamplatform.streamregistry.streams.GlobalKStreams;
 
 @Slf4j
 public class StreamRegistryHealthCheck extends HealthCheck {
@@ -58,7 +58,7 @@ public class StreamRegistryHealthCheck extends HealthCheck {
     public static final String APP_NAME = "StreamRegistryApplication";
     private static final String HEALTH_CHECK_STREAM_NAME = "StreamRegistryHealthCheck";
 
-    private final ManagedKStreams managedKStreams;
+    private final GlobalKStreams managedKStreams;
     private final StreamResource streamResource;
 
     private boolean isStreamCreationHealthy;
@@ -70,7 +70,7 @@ public class StreamRegistryHealthCheck extends HealthCheck {
     // TODO - This needs to move to a /namespace approach vs an environment variable - see #29
     private final String region = System.getenv("MPAAS_REGION");
 
-    public StreamRegistryHealthCheck(ManagedKStreams managedKStreams, StreamResource streamResource, MetricRegistry metricRegistry) {
+    public StreamRegistryHealthCheck(GlobalKStreams managedKStreams, StreamResource streamResource, MetricRegistry metricRegistry) {
         super();
 
         Validate.notNull(managedKStreams, "managedKStreams cannot be null");

@@ -20,32 +20,25 @@ import java.util.concurrent.Future;
 
 import lombok.extern.slf4j.Slf4j;
 
-import io.dropwizard.lifecycle.Managed;
-
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 @Slf4j
-public class ManagedKafkaProducer<K, V> implements Managed, StreamProducer<K, V> {
+public class StreamRegistryProducer<K, V> implements StreamProducer<K, V> {
 
     private final String topicName;
     private final Properties properties;
     private Producer<K, V> producer;
 
-    public ManagedKafkaProducer(Properties properties, String topicName) {
+    public StreamRegistryProducer(Properties properties, String topicName) {
         this.properties = properties;
         this.topicName = topicName;
-    }
-
-    @Override
-    public void start() {
         producer = new KafkaProducer<>(properties);
         log.info("Managed Kafka Producer Started with properties: " + properties);
     }
 
-    @Override
     public void stop() {
         producer.close();
         log.info("Manager Kafka Producer stopped.");
