@@ -31,7 +31,6 @@ import com.homeaway.digitalplatform.streamregistry.ClusterValue;
  *     <li><code>hint</code> - If there are multiple clusters in a vpc, the specific classifier of the cluster. E.g: metrics, logging, etc.</li>
  *     <li><code>type</code> - If there are multiple clusters in a vpc for a type of hint, the specific type of the cluster. E.g. metrics-aggregate or logging-mirror.</li>
  * </ul>
- * </p>
  * <p>
  * <b><code>ClusterValue</code></b> - Avro encoded value containing containing a <code>Map&lt;String&gt;</code> of Stream Registry cluster properties.
  * This map will be returned to a Stream Registry client at the time of registration.
@@ -40,7 +39,6 @@ import com.homeaway.digitalplatform.streamregistry.ClusterValue;
  *     <li><code>bootstrap.servers</code></li>
  *     <li><code>schema.registry.url</code></li>
  * </ul>
- * </p>
  */
 public interface InfraManager {
 

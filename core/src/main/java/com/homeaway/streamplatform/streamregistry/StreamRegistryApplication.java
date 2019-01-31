@@ -62,7 +62,6 @@ import com.homeaway.streamplatform.streamregistry.health.StreamRegistryHealthChe
 import com.homeaway.streamplatform.streamregistry.model.Consumer;
 import com.homeaway.streamplatform.streamregistry.model.Producer;
 import com.homeaway.streamplatform.streamregistry.provider.InfraManager;
-import com.homeaway.streamplatform.streamregistry.resource.ClusterResource;
 import com.homeaway.streamplatform.streamregistry.resource.RegionResource;
 import com.homeaway.streamplatform.streamregistry.resource.StreamResource;
 import com.homeaway.streamplatform.streamregistry.streams.GlobalKStreams;
@@ -155,16 +154,6 @@ public class StreamRegistryApplication extends Application<StreamRegistryConfigu
 
         environment.lifecycle().manage(managedInfraManager);
 
-        // TODO: Check if State Store is Initialized (#98)
-        // This may not be needed if Healthcheck is moved to StreamRegistryProducer
-        // If not healthy after timeout log error and proceed anyway
-//        try {
-//            // Sleep needed to make sure the processor's init method is called before servicing the HTTP requests.
-//            Thread.sleep(10000L);
-//        } catch (InterruptedException e) {
-//            log.error("Error while sleeping the main thread for 10 seconds so that Kstream topology gets initialized.", e);
-//        }
-
         final Client httpClient = new JerseyClientBuilder(environment)
                 .using(configuration.getHttpClient())
                 .using(environment)
@@ -186,12 +175,9 @@ public class StreamRegistryApplication extends Application<StreamRegistryConfigu
         StreamClientDao<Producer> producerDao = new ProducerDaoImpl(streamProducer, streamProcessor, env, regionDao, infraManager, kafkaManager);
         StreamClientDao<Consumer> consumerDao = new ConsumerDaoImpl(streamProducer, streamProcessor, env, regionDao, infraManager, kafkaManager);
         SourceDao sourceDao = new SourceDaoImpl(sourceProducer, sourceProcessor);
-        ClusterDao clusterDao = new ClusterDaoImpl(env, infraManager);
 
         StreamResource streamResource = new StreamResource(streamDao, producerDao, consumerDao, sourceDao);
-        ClusterResource clusterResource = new ClusterResource(clusterDao);
         environment.jersey().register(streamResource);
-        environment.jersey().register(clusterResource);
         environment.jersey().register(new RegionResource(regionDao));
 
         environment.getApplicationContext().addServlet(PingServlet.class, "/ping");
