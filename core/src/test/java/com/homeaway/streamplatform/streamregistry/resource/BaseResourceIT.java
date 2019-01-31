@@ -15,23 +15,7 @@
  */
 package com.homeaway.streamplatform.streamregistry.resource;
 
-<<<<<<< HEAD
-import java.io.File;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-
-import javax.validation.Validator;
-import javax.ws.rs.client.Client;
-
-import kafka.admin.AdminUtils;
-import kafka.admin.RackAwareMode;
-import kafka.utils.ZKStringSerializer$;
-import kafka.utils.ZkUtils;
-import lombok.extern.slf4j.Slf4j;
-
 import com.codahale.metrics.MetricRegistry;
-=======
->>>>>>> Fixed imports
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;

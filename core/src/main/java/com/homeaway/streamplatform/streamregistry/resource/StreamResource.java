@@ -15,25 +15,9 @@
  */
 package com.homeaway.streamplatform.streamregistry.resource;
 
-import com.codahale.metrics.annotation.Timed;
-import com.homeaway.streamplatform.streamregistry.db.dao.SourceDao;
-import com.homeaway.streamplatform.streamregistry.db.dao.StreamClientDao;
-import com.homeaway.streamplatform.streamregistry.db.dao.StreamDao;
-import com.homeaway.streamplatform.streamregistry.exceptions.StreamNotFoundException;
-import com.homeaway.streamplatform.streamregistry.model.Consumer;
-import com.homeaway.streamplatform.streamregistry.model.Producer;
-import com.homeaway.streamplatform.streamregistry.model.Stream;
-import com.homeaway.streamplatform.streamregistry.utils.ResourceUtils;
-import com.homeaway.streamplatform.streamregistry.utils.StreamRegistryUtils;
-import com.homeaway.streamplatform.streamregistry.utils.StreamRegistryUtils.EntriesPage;
-import io.dropwizard.jersey.errors.ErrorMessage;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.SchemaParseException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -45,9 +29,30 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+
+import lombok.extern.slf4j.Slf4j;
+
+import com.codahale.metrics.annotation.Timed;
+
+import io.dropwizard.jersey.errors.ErrorMessage;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+
+import org.apache.avro.SchemaParseException;
+
+import com.homeaway.streamplatform.streamregistry.db.dao.SourceDao;
+import com.homeaway.streamplatform.streamregistry.db.dao.StreamClientDao;
+import com.homeaway.streamplatform.streamregistry.db.dao.StreamDao;
+import com.homeaway.streamplatform.streamregistry.exceptions.StreamNotFoundException;
+import com.homeaway.streamplatform.streamregistry.model.Consumer;
+import com.homeaway.streamplatform.streamregistry.model.Producer;
+import com.homeaway.streamplatform.streamregistry.model.Stream;
+import com.homeaway.streamplatform.streamregistry.utils.ResourceUtils;
+import com.homeaway.streamplatform.streamregistry.utils.StreamRegistryUtils;
+import com.homeaway.streamplatform.streamregistry.utils.StreamRegistryUtils.EntriesPage;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Api(value = "Stream-registry API", description = "Stream Registry API, a centralized governance tool for managing streams.")

@@ -32,7 +32,7 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
  * A {@link Source} is a different from a {@link Producer} since a
  * source captures the CDC (Change Data Capture) of a source system.
  * It enables clients of Stream registry to easily register a new source
- * that's supported by Stream registry through {@SourceType}
+ * that's supported by Stream registry through {@link SourceType}
  * to an already registered stream.
  */
 @JsonDeserialize(builder = Source.SourceBuilder.class)
