@@ -25,20 +25,46 @@ import lombok.Data;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
+
+/**
+ * Source is registered to a stream and determines the origin
+ * of events for this stream.
+ * A {@link Source} is a different from a {@link Producer} since a
+ * source captures the CDC (Change Data Capture) of a source system.
+ * It enables clients of Stream registry to easily register a new source
+ * that's supported by Stream registry through {@SourceType}
+ * to an already registered stream.
+ */
 @JsonDeserialize(builder = Source.SourceBuilder.class)
 @Builder
 @Data
 public class Source {
 
+
+    /**
+     * Stream name this source is registered to
+     */
     @NotNull
     private String streamName;
 
+    /**
+     * Name of the source
+     */
     @NotNull
     private String sourceName;
 
+    /**
+     * Type of the source. Refer to {@link SourceType}
+     */
     @NotNull
     private String sourceType;
 
+    /**
+     * Key/Value map of any additional configuration this Source
+     * needs to pass in a flexible way. This map will be used as
+     * properties AS-IS and no validation will be performed on this
+     * configuration.
+     */
     @NotNull
     private Map<String, String> streamSourceConfiguration;
 
