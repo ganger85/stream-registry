@@ -37,7 +37,8 @@ public class StreamRegistryProducerIT extends BaseResourceIT {
         IntegrationTestUtils.readKeyValues(topicsConfig.getProducerTopic(), consumerConfig, 500, 10000);
 
         String streamName = "testStream_5689";
-        AbstractMap.SimpleEntry<AvroStreamKey, AvroStream> avroMessage = new AvroModelBuilder().buildSampleMessage(streamName, OperationType.UPSERT);
+        AbstractMap.SimpleEntry<AvroStreamKey, AvroStream> avroMessage =
+                new AvroModelBuilder().buildSampleMessage(streamName, OperationType.UPSERT);
 
         // Push a message
         streamProducer.log(avroMessage.getKey(), avroMessage.getValue());
