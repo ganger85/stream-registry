@@ -56,7 +56,7 @@ infraManagerConfig:
       replication.factor: 1
 
 logging:
-  level: DEBUG
+  level: INFO
   loggers:
     com.homeaway: DEBUG
   appenders:

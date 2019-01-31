@@ -48,44 +48,24 @@ public class SourceResource {
 
     @PUT
     @ApiOperation(
-            value = "Register source",
+            value = "Register source with a stream",
             notes = "Register a source with a stream",
-            tags = "sources",
-            response = Source.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Returns Source information", response = Source.class),
-            @ApiResponse(code = 404, message = "Stream not found"),
-            @ApiResponse(code = 412, message = "Unsupported region"),
+            tags = "sources")
+    @ApiResponses(value = {@ApiResponse(code = 202, message = "Source was upserted successfully"),
             @ApiResponse(code = 500, message = "Error Occurred while getting data")})
-    @Path("/{sourceName}")
+    @Path("/{source}")
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
     public Response upsertSource(@ApiParam(value = "name of the stream", required = true) @PathParam("streamName") String streamName,
-                                 @ApiParam(value = "name of the source", required = true) @PathParam("sourceName") String sourceName) {
+                                 @ApiParam(value = "source entity", required = true) Source source) {
         try {
-            Optional<Source> source = sourceDao.get(streamName, sourceName);
-
-            if (!source.isPresent()) {
-                return ResourceUtils.notFound(sourceName);
-            }
-
-            try {
-                sourceDao.upsert(source.get());
-            } catch (Exception e) {
-                log.error("Error occurred while deleting data from Stream Registry.", e);
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-            }
-
-        } catch (IllegalArgumentException e) {
-            log.error("Input is wrong.", e);
-            throw new BadRequestException("Input Validation failed. Message=" + e.getMessage(), e);
+            sourceDao.upsert(source);
         } catch (Exception e) {
-            log.error("Error occurred while getting data from Stream Registry.", e);
-            throw new InternalServerErrorException("Error occurred while updating the Producer in Stream Registry", e);
+            log.error("Error occurred while upserting source.", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
         return Response
-                .ok()
-                .type("text/plain")
-                .entity("Source updated " + sourceName)
+                .status(Response.Status.ACCEPTED)
                 .build();
     }
 
@@ -93,9 +73,8 @@ public class SourceResource {
     @Path("/{sourceName}")
     @ApiOperation(
             value = "Get source",
-            notes = "Get a source associated with the stream",
-            tags = "sources",
-            response = Source.class)
+            notes = "Get the source associated with this stream",
+            tags = "sources")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Returns Source information", response = Source.class),
             @ApiResponse(code = 404, message = "Stream or Source not found"),
             @ApiResponse(code = 500, message = "Error Occurred while getting data")})
@@ -104,22 +83,19 @@ public class SourceResource {
     public Response getSource(@ApiParam(value = "name of the stream", required = true) @PathParam("streamName") String streamName,
                               @ApiParam(value = "name of the source", required = true) @PathParam("sourceName") String sourceName) {
 
-        Optional<Source> source = sourceDao.get(streamName, sourceName);
-
         try {
+            Optional<Source> source = sourceDao.get(streamName, sourceName);
+
             if (!source.isPresent()) {
                 return ResourceUtils.notFound(sourceName);
             }
-            Optional<Source> sourceResponse = sourceDao.get(streamName, sourceName);
-            if (!sourceResponse.isPresent()) {
-                log.warn("Source Not Found: " + sourceName);
-                return ResourceUtils.notFound("Source not found " + sourceName);
-            }
-            return Response.ok().entity(sourceResponse.get()).build();
-        } catch (Exception e) {
-            log.error("Error occurred while getting data from Stream Registry", e);
-            throw new InternalServerErrorException("Error occurred while getting data from Stream Registry", e);
+            return Response.ok().entity(source.get()).build();
+        } catch (
+                Exception e) {
+            log.error("Error occurred while getting source", e);
+            throw new InternalServerErrorException("Error occurred while getting source", e);
         }
+
     }
 
     @DELETE
@@ -157,16 +133,20 @@ public class SourceResource {
             notes = "Gets a list of sources for a given stream",
             tags = "sources",
             response = Source.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Returns Source information", response = Source.class),
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Returns all sources for a given stream", response = List.class),
             @ApiResponse(code = 500, message = "Error Occurred while getting data"),
             @ApiResponse(code = 404, message = "Stream not found")})
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
-    public Response getAllSourcesByStream(
+    public List<Source> getAllSourcesByStream(
             @ApiParam(value = "Stream Name corresponding to the source", required = true) @PathParam("streamName") String streamName) {
         try {
-            List<Source> sources = sourceDao.getAll(streamName);
-            return Response.ok().entity(sources).build();
+            Optional<List<Source>> sources = Optional.ofNullable(sourceDao.getAll(streamName));
+
+            if (!sources.isPresent()) {
+                Response.status(Response.Status.NOT_FOUND.getStatusCode(), "Stream not found").build();
+            }
+            return sources.get();
         } catch (Exception e) {
             log.error("Error occurred while getting data from Stream Registry.", e);
             throw new InternalServerErrorException("Error occurred while getting data from Stream Registry");

@@ -108,7 +108,7 @@ public class BaseResourceIT {
     // TODO: Make resources "consistent" by having all writes (mutations)
     //       wait some timeout period for the processor to process
     // THIS IS A TEMPORARY WORKAROUND for now... centralizing here so that we can soon remove it
-    protected static final int TEST_SLEEP_WAIT_MS = 80;
+    protected static final int TEST_SLEEP_WAIT_MS = 50;
 
     protected static StreamRegistryProducer streamProducer;
 
@@ -121,6 +121,8 @@ public class BaseResourceIT {
     protected static StreamResource streamResource;
 
     protected static ConsumerResource consumerResource;
+
+    protected static SourceResource sourceResource;
 
     protected static ProducerResource producerResource;
 
@@ -259,10 +261,11 @@ public class BaseResourceIT {
             infraManager, kafkaManager);
         StreamClientDao<Consumer> consumerDao = new ConsumerDaoImpl(streamProducer, streamProcessor, env, regionDao,
             infraManager, kafkaManager);
-        SourceDao sourceDao = new SourceDaoImpl(sourceProducer, sourceProcessor.getView());
+        SourceDao sourceDao = new SourceDaoImpl(sourceProducer, sourceProcessor);
         streamResource = new StreamResource(streamDao, producerDao, consumerDao, sourceDao);
         producerResource = new ProducerResource(streamDao, producerDao);
         consumerResource = new ConsumerResource(streamDao, consumerDao);
+        sourceResource = new SourceResource(sourceDao);
 
         SchemaRegistryClient schemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryURL, 1);
         schemaRegistryClient.register(producerTopic + "-key", AvroStreamKey.SCHEMA$);

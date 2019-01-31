@@ -185,7 +185,7 @@ public class StreamRegistryApplication extends Application<StreamRegistryConfigu
         StreamDao streamDao = new StreamDaoImpl(streamProducer, streamProcessor, env, regionDao, infraManager, kafkaManager, streamValidator, schemaManager);
         StreamClientDao<Producer> producerDao = new ProducerDaoImpl(streamProducer, streamProcessor, env, regionDao, infraManager, kafkaManager);
         StreamClientDao<Consumer> consumerDao = new ConsumerDaoImpl(streamProducer, streamProcessor, env, regionDao, infraManager, kafkaManager);
-        SourceDao sourceDao = new SourceDaoImpl(sourceProducer, sourceProcessor.getView());
+        SourceDao sourceDao = new SourceDaoImpl(sourceProducer, sourceProcessor);
         ClusterDao clusterDao = new ClusterDaoImpl(env, infraManager);
 
         StreamResource streamResource = new StreamResource(streamDao, producerDao, consumerDao, sourceDao);
