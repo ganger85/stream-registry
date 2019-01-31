@@ -22,6 +22,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.homeaway.streamplatform.streamregistry.exceptions.UnsupportedSourceType;
 import lombok.extern.slf4j.Slf4j;
 
 import com.codahale.metrics.annotation.Timed;
@@ -35,6 +36,8 @@ import com.homeaway.streamplatform.streamregistry.db.dao.SourceDao;
 import com.homeaway.streamplatform.streamregistry.exceptions.SourceNotFoundException;
 import com.homeaway.streamplatform.streamregistry.model.Source;
 import com.homeaway.streamplatform.streamregistry.utils.ResourceUtils;
+
+import static com.homeaway.streamplatform.streamregistry.model.SourceType.SOURCE_TYPES;
 
 @Slf4j
 public class SourceResource {
@@ -59,7 +62,14 @@ public class SourceResource {
     public Response upsertSource(@ApiParam(value = "name of the stream", required = true) @PathParam("streamName") String streamName,
                                  @ApiParam(value = "source entity", required = true) Source source) {
         try {
-            sourceDao.upsert(source);
+            boolean isSupportedType = SOURCE_TYPES.stream()
+                    .anyMatch(sourceType -> source.getSourceType().equalsIgnoreCase(sourceType));
+
+            if (isSupportedType) {
+                sourceDao.upsert(source);
+            } else {
+                throw new UnsupportedSourceType(source.getSourceType());
+            }
         } catch (Exception e) {
             log.error("Error occurred while upserting source.", e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();

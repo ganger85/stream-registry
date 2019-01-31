@@ -21,9 +21,10 @@ import java.util.List;
 
 /**
  * Source types supported by the Stream Registry
+ * Add to this im-memory list when registry has to support new types.
  */
 public class SourceType {
 
-    public static final List<String> sourceTypes = Arrays.asList("kinesis", "kafka");
+    public static final List<String> SOURCE_TYPES = Arrays.asList("kinesis", "kafka");
 
 }

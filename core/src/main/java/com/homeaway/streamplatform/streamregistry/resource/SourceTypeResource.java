@@ -34,6 +34,8 @@ import io.swagger.annotations.ApiResponses;
 
 import com.homeaway.streamplatform.streamregistry.model.SourceType;
 
+import static com.homeaway.streamplatform.streamregistry.model.SourceType.SOURCE_TYPES;
+
 @Api(value = "Stream-registry API", description = "Stream Registry API, a centralized governance tool for managing streams.")
 @Path("/v0/clusters")
 @Produces(MediaType.APPLICATION_JSON)
@@ -49,6 +51,6 @@ public class SourceTypeResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
     public List<String> getClusters() {
-        return SourceType.sourceTypes;
+        return SOURCE_TYPES;
     }
 }
