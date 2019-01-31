@@ -15,6 +15,8 @@
  */
 package com.homeaway.streamplatform.streamregistry.resource;
 
+import static com.homeaway.streamplatform.streamregistry.model.SourceType.SOURCE_TYPES;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -31,10 +33,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-
-import com.homeaway.streamplatform.streamregistry.model.SourceType;
-
-import static com.homeaway.streamplatform.streamregistry.model.SourceType.SOURCE_TYPES;
 
 @Api(value = "Stream-registry API", description = "Stream Registry API, a centralized governance tool for managing streams.")
 @Path("/v0/clusters")
