@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 @Builder
 @Data
 public class Source {
+
     @NotNull
     private String streamName;
 

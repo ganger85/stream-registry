@@ -32,7 +32,6 @@ import com.google.common.collect.Multimap;
 
 import io.swagger.annotations.*;
 
-import com.homeaway.streamplatform.streamregistry.db.dao.ClusterDao;
 import com.homeaway.streamplatform.streamregistry.model.Cluster;
 import com.homeaway.streamplatform.streamregistry.model.Stream;
 

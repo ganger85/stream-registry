@@ -30,7 +30,7 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
 
 @Slf4j
-public class GlobalKStreams<T>  {
+public class GlobalKStreams<T> {
 
     @Getter
     private final KafkaStreams streams;
