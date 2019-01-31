@@ -118,8 +118,6 @@ public class BaseResourceIT {
 
     protected static GlobalKStreams sourceProcessor;
 
-    protected static ClusterResource clusterResource;
-
     protected static StreamResource streamResource;
 
     protected static ConsumerResource consumerResource;
@@ -264,9 +262,7 @@ public class BaseResourceIT {
         StreamClientDao<Consumer> consumerDao = new ConsumerDaoImpl(streamProducer, streamProcessor, env, regionDao,
             infraManager, kafkaManager);
         SourceDao sourceDao = new SourceDaoImpl(sourceProducer, sourceProcessor);
-        ClusterDao clusterDao = new ClusterDaoImpl(env, infraManager);
 
-        clusterResource = new ClusterResource(clusterDao);
         streamResource = new StreamResource(streamDao, producerDao, consumerDao, sourceDao);
         producerResource = new ProducerResource(streamDao, producerDao);
         consumerResource = new ConsumerResource(streamDao, consumerDao);
