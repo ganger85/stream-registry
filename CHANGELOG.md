@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [0.4.3] - SNAPSHOT
+
+### Added
+- Added support for /sources
+
 ### Changed
 - Updated [Building locally](https://github.com/homeaway/stream-registry#building-locally) section in README with OpenJDK 11 reference
 
