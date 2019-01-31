@@ -15,16 +15,16 @@
  */
 package com.homeaway.streamplatform.streamregistry.resource;
 
-import java.util.*;
-
-import javax.ws.rs.core.Response;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.homeaway.streamplatform.streamregistry.model.Source;
 import com.homeaway.streamplatform.streamregistry.model.Stream;
 import com.homeaway.streamplatform.streamregistry.utils.JsonModelBuilder;
+import org.junit.Assert;
+import org.junit.Test;
+
+import javax.ws.rs.core.Response;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SourceResourceIT extends BaseResourceIT {
 
