@@ -58,7 +58,7 @@ public class SourceResourceIT extends BaseResourceIT {
         Source sourceB = Source.builder()
                 .streamName("streamA")
                 .sourceName("sourceB")
-                .sourceType("sqlServer")
+                .sourceType("kafka")
                 .streamSourceConfiguration(configuration)
                 .build();
 
