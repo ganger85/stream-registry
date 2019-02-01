@@ -224,7 +224,6 @@ public class BaseResourceIT {
 
         Properties streamProperties = new Properties();
         streamProperties.putAll(streamsConfig);
-        streamProperties.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/streams/kafka-streams");
 
         streamProcessor = new GlobalKStreams<>(streamProperties, BaseResourceIT.topicsConfig.getProducerTopic(),
                 topicsConfig.getProducerStateStore(), () -> initialized.complete(true));
@@ -232,7 +231,6 @@ public class BaseResourceIT {
 
         Properties sourceProperties = new Properties();
         sourceProperties.putAll(streamsConfig);
-        sourceProperties.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/sources/kafka-streams");
         sourceProcessor = new GlobalKStreams<>(sourceProperties, BaseResourceIT.topicsConfig.getStreamSourceTopic(),
                 topicsConfig.getStreamSourceStateStore(), () -> initialized.complete(true));
 
