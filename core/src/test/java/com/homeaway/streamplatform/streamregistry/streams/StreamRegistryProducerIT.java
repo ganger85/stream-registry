@@ -29,7 +29,7 @@ import com.homeaway.digitalplatform.streamregistry.OperationType;
 import com.homeaway.streamplatform.streamregistry.resource.BaseResourceIT;
 import com.homeaway.streamplatform.streamregistry.utils.AvroModelBuilder;
 
-public class ManagedKafkaProducerIT extends BaseResourceIT {
+public class StreamRegistryProducerIT extends BaseResourceIT {
 
     @Test
     public void testManagedProducer() {

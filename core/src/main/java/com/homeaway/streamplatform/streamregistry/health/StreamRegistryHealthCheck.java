@@ -49,7 +49,7 @@ import com.homeaway.streamplatform.streamregistry.model.Tags;
 import com.homeaway.streamplatform.streamregistry.resource.ConsumerResource;
 import com.homeaway.streamplatform.streamregistry.resource.ProducerResource;
 import com.homeaway.streamplatform.streamregistry.resource.StreamResource;
-import com.homeaway.streamplatform.streamregistry.streams.ManagedKStreams;
+import com.homeaway.streamplatform.streamregistry.streams.GlobalKStreams;
 
 @Slf4j
 public class StreamRegistryHealthCheck extends HealthCheck {
@@ -59,7 +59,7 @@ public class StreamRegistryHealthCheck extends HealthCheck {
     public static final String APP_NAME = "StreamRegistryApplication";
     private static final String HEALTH_CHECK_STREAM_NAME = "StreamRegistryHealthCheck";
 
-    private final ManagedKStreams managedKStreams;
+    private final GlobalKStreams managedKStreams;
     private final StreamResource streamResource;
 
     private boolean isStreamCreationHealthy;
@@ -76,8 +76,9 @@ public class StreamRegistryHealthCheck extends HealthCheck {
      *      replication-factor to 1 - there is only one broker in IntegrationTest cluster
      *      region - Build environment does not have MPAAS_REGION env variables.
      */
-    public StreamRegistryHealthCheck(ManagedKStreams managedKStreams, StreamResource streamResource, MetricRegistry metricRegistry,
+    public StreamRegistryHealthCheck(GlobalKStreams managedKStreams, StreamResource streamResource, MetricRegistry metricRegistry,
                                      int healthcheckStreamReplicationFactor, String region) {
+
         super();
 
         Validate.notNull(managedKStreams, "managedKStreams cannot be null");
@@ -98,7 +99,7 @@ public class StreamRegistryHealthCheck extends HealthCheck {
         metricRegistry.register(Metrics.STATE_STORE_STATE.getName(), (Gauge<String>)() -> getKstreamsState().toString());
     }
 
-    public StreamRegistryHealthCheck(ManagedKStreams managedKStreams, StreamResource streamResource, MetricRegistry metricRegistry) {
+    public StreamRegistryHealthCheck(GlobalKStreams managedKStreams, StreamResource streamResource, MetricRegistry metricRegistry) {
         // TODO - looking-up env variables needs to move to a /namespace approach - see #29
         this(managedKStreams, streamResource, metricRegistry, 3, System.getenv("MPAAS_REGION"));
     }

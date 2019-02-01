@@ -21,8 +21,6 @@ import java.util.Properties;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import io.dropwizard.lifecycle.Managed;
-
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.state.KeyValueIterator;
@@ -32,7 +30,7 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
 
 @Slf4j
-public class ManagedKStreams<T> implements Managed {
+public class GlobalKStreams<T>  {
 
     @Getter
     private final KafkaStreams streams;
@@ -48,8 +46,8 @@ public class ManagedKStreams<T> implements Managed {
 
     private boolean isRunning = false;
 
-    public ManagedKStreams(Properties streamProperties, String topicName, String stateStoreName,
-                           KStreamsProcessorListener testListener) {
+    public GlobalKStreams(Properties streamProperties, String topicName, String stateStoreName,
+                          KStreamsProcessorListener testListener) {
 
         this.streamProperties = streamProperties;
         this.stateStoreName = stateStoreName;
@@ -69,17 +67,16 @@ public class ManagedKStreams<T> implements Managed {
             }
         });
         streams.setUncaughtExceptionHandler((t, e) -> log.error("KafkaStreams job failed", e));
+        start();
     }
 
-    @Override
-    public void start() {
+    private void start() {
         streams.start();
         log.info("Stream Registry KStreams started.");
         log.info("Stream Registry State Store Name: {}", stateStoreName);
         view = streams.store(stateStoreName, QueryableStoreTypes.keyValueStore());
     }
 
-    @Override
     public void stop() {
         streams.close();
         log.info("KStreams closed");
