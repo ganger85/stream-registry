@@ -4,20 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-<<<<<<< HEAD
 ## [0.4.4] - SNAPSHOT
-=======
-## [0.4.3] - SNAPSHOT
->>>>>>> 55557ec4919f02a2292d2978c79cca514b05da6f
 
 ### Added
 - Added support for /sources
 
-<<<<<<< HEAD
 ## [0.4.3] - 20190131
 
-=======
->>>>>>> 55557ec4919f02a2292d2978c79cca514b05da6f
 ### Changed
 - Updated [Building locally](https://github.com/homeaway/stream-registry#building-locally) section in README with OpenJDK 11 reference
 - Fixed the failing HealthCheck. Passed a valid schema while creating HealthCheckStream (#94)
