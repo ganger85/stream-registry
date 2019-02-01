@@ -29,7 +29,7 @@ import com.homeaway.digitalplatform.streamregistry.Sources;
 import com.homeaway.streamplatform.streamregistry.db.dao.SourceDao;
 import com.homeaway.streamplatform.streamregistry.exceptions.SourceNotFoundException;
 import com.homeaway.streamplatform.streamregistry.model.Source;
-import com.homeaway.streamplatform.streamregistry.streams.GlobalKStreams;
+import com.homeaway.streamplatform.streamregistry.streams.GenericEventStore;
 import com.homeaway.streamplatform.streamregistry.streams.StreamProducer;
 
 
@@ -40,16 +40,41 @@ public class SourceDaoImpl implements SourceDao {
     private StreamProducer kafkaProducer;
 
     @NotNull
-    private final GlobalKStreams kstreams;
+    private final GenericEventStore kstreams;
 
-    public SourceDaoImpl(StreamProducer kafkaProducer, GlobalKStreams kstreams) {
+    public SourceDaoImpl(StreamProducer kafkaProducer, GenericEventStore kstreams) {
         this.kafkaProducer = kafkaProducer;
         this.kstreams = kstreams;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public void upsert(Source givenSource) {
+    public Optional<Source> get(String streamName, String sourceName) {
+
+        AvroStreamKey avroKey = getAvroKeyFromString(streamName);
+
+        Optional<Sources> avroSources
+                = Optional.ofNullable((Sources) kstreams.getAvroStreamForKey(avroKey).get());
+
+        if (!avroSources.isPresent()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(getModelSourceFromAvroSource(
+                avroSources
+                        .get()
+                        .getSources()
+                        .stream()
+                        .filter(stream -> stream.getSourceName().equalsIgnoreCase(sourceName))
+                        .findAny().get()));
+    }
+
+    @Override
+    public Source insert(Source givenSource) {
+
+    }
+
+    @Override
+    public Source update(Source givenSource) {
 
 
         AvroStreamKey avroStreamKey = getAvroKeyFromString(
@@ -135,31 +160,8 @@ public class SourceDaoImpl implements SourceDao {
                 .build();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public Optional<Source> get(String streamName, String sourceName) {
-
-        AvroStreamKey avroKey = getAvroKeyFromString(streamName);
-
-        Optional<Sources> avroSources
-                = Optional.ofNullable((Sources) kstreams.getAvroStreamForKey(avroKey).get());
-
-        if (!avroSources.isPresent()) {
-            return Optional.empty();
-        }
-
-        return Optional.of(getModelSourceFromAvroSource(
-                avroSources
-                        .get()
-                        .getSources()
-                        .stream()
-                        .filter(stream -> stream.getSourceName().equalsIgnoreCase(sourceName))
-                        .findAny().get()));
-    }
-
-
-    @Override
-    public void delete(String streamName, String sourceName) {
+    public Source delete(String streamName, String sourceName) {
         AvroStreamKey stream = getAvroKeyFromString(streamName);
         Optional<com.homeaway.digitalplatform.streamregistry.Sources> avroSources =
                  kstreams.getAvroStreamForKey(stream);

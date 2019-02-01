@@ -24,6 +24,7 @@ import java.util.Properties;
 
 import javax.ws.rs.client.Client;
 
+import io.dropwizard.lifecycle.Managed;
 import lombok.extern.slf4j.Slf4j;
 
 import com.codahale.metrics.MetricRegistry;
@@ -77,7 +78,7 @@ import com.homeaway.streamplatform.streamregistry.model.Producer;
 import com.homeaway.streamplatform.streamregistry.provider.InfraManager;
 import com.homeaway.streamplatform.streamregistry.resource.RegionResource;
 import com.homeaway.streamplatform.streamregistry.resource.StreamResource;
-import com.homeaway.streamplatform.streamregistry.streams.GlobalKStreams;
+import com.homeaway.streamplatform.streamregistry.streams.GenericEventStore;
 import com.homeaway.streamplatform.streamregistry.streams.ManagedInfraManager;
 import com.homeaway.streamplatform.streamregistry.streams.StreamRegistryProducer;
 
@@ -139,16 +140,30 @@ public class StreamRegistryApplication extends Application<StreamRegistryConfigu
         streamProperties.putAll(kstreamsProperties);
         streamProperties.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/streams/kafka-streams");
 
-        GlobalKStreams<AvroStream> streamProcessor = new GlobalKStreams(streamProperties,
-                topicsConfig.getProducerTopic(), topicsConfig.getProducerStateStore(), null);
+        GenericEventStore<AvroStream> streamProcessor = new GenericEventStore(streamProperties,
+                topicsConfig.getProducerTopic(), topicsConfig.getProducerStateStore());
+        // TODO consider adding to DW lifecycle management for controlled startup / shutdown
+        environment.lifecycle().manage(new Managed() {
+                                           @Override
+                                           public void start() throws Exception {
+                                               streamProcessor.start();
+                                           }
 
+                                           @Override
+                                           public void stop() throws Exception {
+                                               streamProcessor.stop();
+                                           }
+                                       });
+        // streamProcessor.start();
 
         Properties sourceProperties = new Properties();
         sourceProperties.putAll(kstreamsProperties);
         sourceProperties.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/sources/kafka-streams");
 
-        GlobalKStreams<Sources> sourceProcessor = new GlobalKStreams(sourceProperties,
-                topicsConfig.getStreamSourceTopic(), topicsConfig.getStreamSourceStateStore(), null);
+        GenericEventStore<Sources> sourceProcessor = new GenericEventStore(sourceProperties,
+                topicsConfig.getStreamSourceTopic(), topicsConfig.getStreamSourceStateStore());
+        // TODO consider adding to DW lifecycle management for controlled startup / shutdown
+        sourceProcessor.start();
 
         InfraManagerConfig infraManagerConfig = configuration.getInfraManagerConfig();
         String infraManagerClassName = infraManagerConfig.getClassName();

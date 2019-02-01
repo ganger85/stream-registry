@@ -29,8 +29,13 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 
 import com.homeaway.digitalplatform.streamregistry.AvroStreamKey;
 
+/**
+ * This class provides some boiler-plate functionality for an event store.
+ * Current functionality supported is lookup-one (get) and lookup-all (getAll).
+ * @param <T> The type of the record that will be used to store in the event store.
+ */
 @Slf4j
-public class GlobalKStreams<T> {
+public class GenericEventStore<T> {
 
     @Getter
     private final KafkaStreams streams;
@@ -39,38 +44,47 @@ public class GlobalKStreams<T> {
     private final Properties streamProperties;
 
     @Getter
+    private final String topicName;
+
+    @Getter
     private final String stateStoreName;
 
     @Getter
     private ReadOnlyKeyValueStore<AvroStreamKey, T> view;
 
-    private boolean isRunning = false;
+    public GenericEventStore(Properties streamProperties, String topicName, String stateStoreName) {
+        this(streamProperties, topicName, stateStoreName, null);
+    }
 
-    public GlobalKStreams(Properties streamProperties, String topicName, String stateStoreName,
-                          KStreamsProcessorListener testListener) {
+    public GenericEventStore(Properties streamProperties, String topicName, String stateStoreName,
+                             KStreamsProcessorListener testListener) {
 
         this.streamProperties = streamProperties;
+        this.topicName = topicName;
         this.stateStoreName = stateStoreName;
 
         KStreamBuilder kStreamBuilder = new KStreamBuilder();
 
+        // use global table to cache all keys across all partitions
         kStreamBuilder.globalTable(topicName, stateStoreName);
 
         streams = new KafkaStreams(kStreamBuilder, streamProperties);
-        // [ #132 ] - Improve build times by notifying test listener that we are running
+
+        // Improve build times by notifying test listener that we are running
         streams.setStateListener((newState, oldState) -> {
-            if (!isRunning && newState == KafkaStreams.State.RUNNING) {
-                isRunning = true;
+            if (newState == KafkaStreams.State.RUNNING) {
                 if (testListener != null) {
                     testListener.stateStoreInitialized();
                 }
             }
         });
         streams.setUncaughtExceptionHandler((t, e) -> log.error("KafkaStreams job failed", e));
+
+        // TODO: Should not start as part of constructor... this should be part of initialization somewhere. Remove.
         start();
     }
 
-    private void start() {
+    public void start() {
         streams.start();
         log.info("Stream Registry KStreams started.");
         log.info("Stream Registry State Store Name: {}", stateStoreName);

@@ -22,11 +22,13 @@ import com.homeaway.streamplatform.streamregistry.model.Source;
 
 public interface SourceDao {
 
-    void upsert(Source source);
-
     Optional<Source> get(String streamName, String sourceName);
 
-    void delete(String streamName, String sourceName);
+    Source insert(Source source);
+
+    Source update(Source source);
+
+    Source delete(String streamName, String sourceName);
 
     List<Source> getAll(String streamName);
 

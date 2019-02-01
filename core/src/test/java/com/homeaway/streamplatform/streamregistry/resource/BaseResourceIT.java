@@ -80,7 +80,7 @@ import com.homeaway.streamplatform.streamregistry.health.StreamRegistryHealthChe
 import com.homeaway.streamplatform.streamregistry.model.Consumer;
 import com.homeaway.streamplatform.streamregistry.model.Producer;
 import com.homeaway.streamplatform.streamregistry.provider.InfraManager;
-import com.homeaway.streamplatform.streamregistry.streams.GlobalKStreams;
+import com.homeaway.streamplatform.streamregistry.streams.GenericEventStore;
 import com.homeaway.streamplatform.streamregistry.streams.StreamRegistryProducer;
 
 @SuppressWarnings("WeakerAccess")
@@ -127,9 +127,9 @@ public class BaseResourceIT {
 
     protected static StreamRegistryProducer sourceProducer;
 
-    protected static GlobalKStreams streamProcessor;
+    protected static GenericEventStore streamProcessor;
 
-    protected static GlobalKStreams sourceProcessor;
+    protected static GenericEventStore sourceProcessor;
 
     protected static StreamResource streamResource;
 
@@ -229,7 +229,7 @@ public class BaseResourceIT {
         Properties streamProperties = new Properties();
         streamProperties.putAll(streamsConfig);
 
-        streamProcessor = new GlobalKStreams<>(streamProperties, BaseResourceIT.topicsConfig.getProducerTopic(),
+        streamProcessor = new GenericEventStore<>(streamProperties, BaseResourceIT.topicsConfig.getProducerTopic(),
                 topicsConfig.getProducerStateStore(), () -> initialized.complete(true));
 
 
@@ -237,7 +237,7 @@ public class BaseResourceIT {
         sourceProperties.putAll(streamsConfig);
         sourceProperties.put("application.id", "source-kstreams-application.id");
 
-        sourceProcessor = new GlobalKStreams<>(sourceProperties, BaseResourceIT.topicsConfig.getStreamSourceTopic(),
+        sourceProcessor = new GenericEventStore<>(sourceProperties, BaseResourceIT.topicsConfig.getStreamSourceTopic(),
                 topicsConfig.getStreamSourceStateStore(), () -> initialized.complete(true));
 
         consumerConfig = new Properties();

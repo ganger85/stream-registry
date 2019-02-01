@@ -49,7 +49,7 @@ import com.homeaway.streamplatform.streamregistry.model.Tags;
 import com.homeaway.streamplatform.streamregistry.resource.ConsumerResource;
 import com.homeaway.streamplatform.streamregistry.resource.ProducerResource;
 import com.homeaway.streamplatform.streamregistry.resource.StreamResource;
-import com.homeaway.streamplatform.streamregistry.streams.GlobalKStreams;
+import com.homeaway.streamplatform.streamregistry.streams.GenericEventStore;
 
 /**
  * Stream registry health check. This reports a simple health check by sending a message to the internal store
@@ -63,7 +63,7 @@ public class StreamRegistryHealthCheck extends HealthCheck {
     private static final String APP_NAME = "StreamRegistryApplication";
     private static final String HEALTH_CHECK_STREAM_NAME = "StreamRegistryHealthCheck";
 
-    private final GlobalKStreams managedKStreams;
+    private final GenericEventStore managedKStreams;
     private final StreamResource streamResource;
 
     private boolean isStreamCreationHealthy;
@@ -83,7 +83,7 @@ public class StreamRegistryHealthCheck extends HealthCheck {
      * @param healthcheckStreamReplicationFactor replication of the IntegrationTest cluster
      * @param region                             Build environment does not have MPAAS_REGION env variables.
      */
-    public StreamRegistryHealthCheck(GlobalKStreams managedKStreams, StreamResource streamResource, MetricRegistry metricRegistry,
+    public StreamRegistryHealthCheck(GenericEventStore managedKStreams, StreamResource streamResource, MetricRegistry metricRegistry,
                                      int healthcheckStreamReplicationFactor, String region) {
         super();
 
@@ -112,7 +112,7 @@ public class StreamRegistryHealthCheck extends HealthCheck {
      * @param streamResource  the stream resource
      * @param metricRegistry  the metric registry
      */
-    public StreamRegistryHealthCheck(GlobalKStreams managedKStreams, StreamResource streamResource, MetricRegistry metricRegistry) {
+    public StreamRegistryHealthCheck(GenericEventStore managedKStreams, StreamResource streamResource, MetricRegistry metricRegistry) {
         // TODO - looking-up env variables needs to move to a /namespace approach - see #29
         this(managedKStreams, streamResource, metricRegistry, 3, System.getenv("MPAAS_REGION"));
     }

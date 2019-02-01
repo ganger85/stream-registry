@@ -39,7 +39,7 @@ import com.homeaway.streamplatform.streamregistry.exceptions.ConsumerNotFoundExc
 import com.homeaway.streamplatform.streamregistry.exceptions.StreamNotFoundException;
 import com.homeaway.streamplatform.streamregistry.exceptions.UnknownRegionException;
 import com.homeaway.streamplatform.streamregistry.provider.InfraManager;
-import com.homeaway.streamplatform.streamregistry.streams.GlobalKStreams;
+import com.homeaway.streamplatform.streamregistry.streams.GenericEventStore;
 import com.homeaway.streamplatform.streamregistry.streams.StreamProducer;
 import com.homeaway.streamplatform.streamregistry.utils.StreamRegistryUtils;
 
@@ -51,7 +51,7 @@ public class ConsumerDaoImpl extends AbstractDao implements StreamClientDao<com.
     private static final String ACTOR_TYPE = "consumer";
 
     public ConsumerDaoImpl(StreamProducer streamProducer,
-        GlobalKStreams kStreams,
+        GenericEventStore kStreams,
         String env,
         RegionDao regionDao,
         InfraManager infraManager,
