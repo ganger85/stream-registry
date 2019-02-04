@@ -233,7 +233,7 @@ public class StreamRegistryHealthCheck extends HealthCheck {
         try {
             AvroStreamKey avroStreamKey = AvroStreamKey.newBuilder().setStreamName(HEALTH_CHECK_STREAM_NAME).build();
             @SuppressWarnings("unchecked")
-            Optional<AvroStream> avroStreamValue = (Optional<AvroStream>) managedKStreams.getAvroStreamForKey(avroStreamKey);
+            Optional<AvroStream> avroStreamValue = (Optional<AvroStream>) managedKStreams.get(avroStreamKey);
             if(!avroStreamValue.isPresent() || ! avroStreamValue.get().getName().equals(HEALTH_CHECK_STREAM_NAME)) {
                 setStateStoreHealthy(false);
                 throw new IllegalStateException("HealthCheck Failed: StreamRegistryHealthCheck Stream not available in StateStore.");

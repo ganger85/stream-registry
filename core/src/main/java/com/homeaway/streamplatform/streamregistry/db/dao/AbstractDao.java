@@ -116,7 +116,7 @@ public abstract class AbstractDao {
 
     protected Pair<AvroStreamKey, Optional<AvroStream>> getAvroStreamKeyValue(String streamName) {
         AvroStreamKey key = AvroStreamKey.newBuilder().setStreamName(streamName).build();
-        Optional<AvroStream> value = kStreams.getAvroStreamForKey(key);
+        Optional<AvroStream> value = kStreams.get(key);
         return new ImmutablePair<>(key, value);
     }
 

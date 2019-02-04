@@ -96,7 +96,7 @@ public class GenericEventStore<T> {
         log.info("KStreams closed");
     }
 
-    public Optional<T> getAvroStreamForKey(AvroStreamKey key) {
+    public Optional<T> get(AvroStreamKey key) {
         return Optional.ofNullable(view.get(key));
     }
 

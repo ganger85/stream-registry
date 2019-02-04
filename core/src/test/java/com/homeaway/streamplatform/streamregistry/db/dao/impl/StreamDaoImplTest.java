@@ -77,7 +77,7 @@ public class StreamDaoImplTest {
     @Test(expected = StreamCreationException.class)
     public void testUpsertStreamChangePartitionCountFails() {
         AvroStream originalStream = buildTestAvroStream();
-        when(managedKStreams.getAvroStreamForKey(TEST_STREAM_KEY)).thenReturn(Optional.of(originalStream));
+        when(managedKStreams.get(TEST_STREAM_KEY)).thenReturn(Optional.of(originalStream));
 
         Stream newStream = buildTestStream();
         newStream.setPartitions(newStream.getPartitions() + 1);
@@ -91,7 +91,7 @@ public class StreamDaoImplTest {
     @Test(expected = StreamCreationException.class)
     public void testUpsertStreamChangeReplicationFactorFails() {
         AvroStream originalStream = buildTestAvroStream();
-        when(managedKStreams.getAvroStreamForKey(TEST_STREAM_KEY)).thenReturn(Optional.of(originalStream));
+        when(managedKStreams.get(TEST_STREAM_KEY)).thenReturn(Optional.of(originalStream));
 
         Stream newStream = buildTestStream();
         newStream.setReplicationFactor(newStream.getReplicationFactor() + 1);
@@ -104,7 +104,7 @@ public class StreamDaoImplTest {
     @Test
     public void testUpsertStreamPushesUpdatedSchemaMetadata() {
         AvroStream originalStream = buildTestAvroStream();
-        when(managedKStreams.getAvroStreamForKey(TEST_STREAM_KEY)).thenReturn(Optional.of(originalStream));
+        when(managedKStreams.get(TEST_STREAM_KEY)).thenReturn(Optional.of(originalStream));
 
         Stream newStream = buildTestStream();
         SchemaReference newKeySchemaReference = new SchemaReference(TEST_STREAM_KEY.getStreamName() + "-key", 2, 3);
@@ -135,7 +135,7 @@ public class StreamDaoImplTest {
     @Test(expected = StreamCreationException.class)
     public void testIncompatibleSchemaFails() {
         AvroStream originalStream = buildTestAvroStream();
-        when(managedKStreams.getAvroStreamForKey(TEST_STREAM_KEY)).thenReturn(Optional.of(originalStream));
+        when(managedKStreams.get(TEST_STREAM_KEY)).thenReturn(Optional.of(originalStream));
 
         Stream newStream = buildTestStream();
         SchemaReference newKeySchemaReference = new SchemaReference(TEST_STREAM_KEY.getStreamName() + "-key", 2, 3);

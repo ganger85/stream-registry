@@ -71,14 +71,19 @@ public class SourceResource {
             boolean isSupportedType = SOURCE_TYPES.stream()
                     .anyMatch(sourceType -> source.getSourceType().equalsIgnoreCase(sourceType));
 
-            if (isSupportedType) {
-                sourceDao.upsert(source);
-            } else {
+            if (!isSupportedType) {
                 throw new UnsupportedSourceType(source.getSourceType());
+            }
+            if (sourceDao.get(source.getStreamName(), source.getSourceName()).isPresent()) {
+                sourceDao.update(source);
+            } else {
+                sourceDao.insert(source);
             }
         } catch (Exception e) {
             log.error("Error occurred while upserting source.", e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .build();
         }
         return Response
                 .status(Response.Status.ACCEPTED)
@@ -154,15 +159,18 @@ public class SourceResource {
             @ApiResponse(code = 404, message = "Stream not found")})
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
-    public List<Source> getAllSourcesByStream(
+    public Response getAllSourcesByStream(
             @ApiParam(value = "Stream Name corresponding to the source", required = true) @PathParam("streamName") String streamName) {
         try {
             Optional<List<Source>> sources = Optional.ofNullable(sourceDao.getAll(streamName));
 
             if (!sources.isPresent()) {
-                Response.status(Response.Status.NOT_FOUND.getStatusCode(), "Stream not found").build();
+                return Response.status(Response.Status.NOT_FOUND.getStatusCode(), "Stream not found").build();
             }
-            return sources.get();
+            return Response
+                    .ok()
+                    .entity(sources.get())
+                    .build();
         } catch (Exception e) {
             log.error("Error occurred while getting data from Stream Registry.", e);
             throw new InternalServerErrorException("Error occurred while getting data from Stream Registry");

@@ -257,7 +257,7 @@ public class StreamDaoImpl extends AbstractDao implements StreamDao, StreamValid
     @Override
     public Optional<Stream> getStream(String streamName) {
         log.info("Pulling stream information from global state-store for streamName={}", streamName);
-        Optional<AvroStream> streamValue = kStreams.getAvroStreamForKey(AvroStreamKey.newBuilder().setStreamName(streamName).build());
+        Optional<AvroStream> streamValue = kStreams.get(AvroStreamKey.newBuilder().setStreamName(streamName).build());
         return streamValue.map(AvroToJsonDTO::convertAvroToJson);
     }
 

@@ -28,6 +28,7 @@ public interface SourceDao {
 
     Source update(Source source);
 
+    // TODO consider returning the deleted source
     Source delete(String streamName, String sourceName);
 
     List<Source> getAll(String streamName);

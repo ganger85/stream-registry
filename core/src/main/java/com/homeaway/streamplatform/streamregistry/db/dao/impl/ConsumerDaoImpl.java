@@ -157,7 +157,7 @@ public class ConsumerDaoImpl extends AbstractDao implements StreamClientDao<com.
         // pull data from state store of this instance.
         log.info("Pulling stream information from local instance's state-store for streamName={} ; consumerName={}", streamName,
             consumerName);
-        Optional<AvroStream> streamValue = kStreams.getAvroStreamForKey(
+        Optional<AvroStream> streamValue = kStreams.get(
             AvroStreamKey.newBuilder().setStreamName(streamName).build());
         if (streamValue.isPresent()) {
             streamValue.get().setOperationType(OperationType.GET);
@@ -173,7 +173,7 @@ public class ConsumerDaoImpl extends AbstractDao implements StreamClientDao<com.
         List<com.homeaway.streamplatform.streamregistry.model.Consumer> consumers = new ArrayList<>();
         // pull data from state store of this instance.
         log.info("Pulling stream information from local instance's state-store for stream={} ; consumers=all", streamName);
-        Optional<AvroStream> streamValue = kStreams.getAvroStreamForKey(AvroStreamKey.newBuilder().setStreamName(streamName).build());
+        Optional<AvroStream> streamValue = kStreams.get(AvroStreamKey.newBuilder().setStreamName(streamName).build());
         if (streamValue.isPresent() && streamValue.get().getConsumers() != null) {
             streamValue.get().setOperationType(OperationType.GET);
             for (com.homeaway.digitalplatform.streamregistry.Consumer consumer : streamValue.get().getConsumers()) {
